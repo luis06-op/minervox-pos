@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINERVOX - Punto de Venta</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- html2pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
+    <div id="app" class="w-full h-full flex flex-col md:flex-row">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="bg-blue-900 text-white w-full md:w-20 lg:w-64 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-start py-4 md:px-4 md:py-6 shadow-xl z-20">
+            <div class="hidden md:block mb-8 text-center w-full">
+                <h1 class="text-2xl font-bold text-blue-300 tracking-wider">MINERVOX</h1>
+            </div>
+            
+            <button @click="currentView = 'pos'" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'pos'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
+                <i class="fa-solid fa-cash-register text-xl lg:mr-3"></i>
+                <span class="hidden lg:inline font-semibold">POS</span>
+            </button>
+            <button @click="currentView = 'cartera'; loadCarteraDashboard(); loadDeudores();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'cartera'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
+                <i class="fa-solid fa-wallet text-xl lg:mr-3"></i>
+                <span class="hidden lg:inline font-semibold">Cartera</span>
+            </button>
+            <button @click="currentView = 'inventario'; loadProductos();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'inventario'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
+                <i class="fa-solid fa-boxes-stacked text-xl lg:mr-3"></i>
+                <span class="hidden lg:inline font-semibold">Inventario</span>
+            </button>
+            <button @click="currentView = 'config'; loadConfig();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'config'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none">
+                <i class="fa-solid fa-gear text-xl lg:mr-3"></i>
+                <span class="hidden lg:inline font-semibold">Ajustes</span>
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto relative w-full h-full pb-20 md:pb-0">
+            
+            <!-- Toast Notifications -->
+            <div v-if="toast.show" :class="toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'" class="absolute top-4 right-4 text-white px-6 py-3 rounded shadow-lg z-50 flex items-center transition-all duration-300">
+                <i :class="toast.type === 'error' ? 'fa-triangle-exclamation' : 'fa-check-circle'" class="fa-solid mr-2"></i>
+                {{ toast.message }}
+            </div>
+
+            <!-- VIEW: POS -->
+            <div v-show="currentView === 'pos'" class="h-full flex flex-col md:flex-row">
+                <!-- Products Grid -->
+                <div class="flex-1 p-4 overflow-y-auto">
+                    
+                    <!-- Stock Alerts -->
+                    <div v-if="lowStockProducts.length > 0" class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                        <p class="font-bold">¡Atención! Stock Crítico</p>
+                        <p>Los siguientes productos están por debajo del mínimo: 
+                            <span v-for="(p, i) in lowStockProducts" :key="p.id">
+                                {{ p.nombre }} ({{ p.stock }} {{ p.unidad }})<span v-if="i < lowStockProducts.length - 1">, </span>
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Catálogo</h2>
+                        <!-- Toggle Contado / Crédito -->
+                        <div class="flex items-center space-x-3 bg-white p-2 rounded-lg shadow-sm border">
+                            <span :class="{'font-bold text-blue-600': tipoVenta === 'contado'}" class="text-sm">CONTADO</span>
+                            <button @click="toggleTipoVenta" class="w-14 h-7 bg-gray-300 rounded-full relative transition-colors duration-300 focus:outline-none" :class="{'bg-blue-600': tipoVenta === 'credito'}">
+                                <span class="absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300" :class="{'transform translate-x-7': tipoVenta === 'credito'}"></span>
+                            </button>
+                            <span :class="{'font-bold text-blue-600': tipoVenta === 'credito'}" class="text-sm">CRÉDITO</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div v-for="prod in productos" :key="prod.id" @click="addToCart(prod)" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition flex flex-col justify-between h-40">
+                            <div>
+                                <h3 class="font-semibold text-gray-800 leading-tight">{{ prod.nombre }}</h3>
+                                <p class="text-xs text-gray-500 mt-1">Stock: <span :class="{'text-red-500 font-bold': parseFloat(prod.stock) <= parseFloat(prod.stock_minimo)}">{{ prod.stock }}</span> {{ prod.unidad }}</p>
+                            </div>
+                            <div class="text-right mt-2">
+                                <span class="text-lg font-bold text-blue-600">
+                                    {{ formatMoney(tipoVenta === 'contado' ? prod.precio_contado : prod.precio_credito) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart Panel -->
+                <div class="w-full md:w-96 bg-white border-l shadow-2xl flex flex-col h-full z-10" :class="{'fixed inset-0 top-auto h-[80vh]': isMobileCartOpen, 'hidden md:flex': !isMobileCartOpen}">
+                    
+                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                        <h2 class="text-xl font-bold">Resumen de Venta</h2>
+                        <button class="md:hidden text-gray-500" @click="isMobileCartOpen = false">
+                            <i class="fa-solid fa-times text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div v-if="cart.length === 0" class="text-center text-gray-400 mt-10">
+                            <i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i>
+                            <p>Carrito vacío</p>
+                        </div>
+                        
+                        <div v-for="(item, index) in cart" :key="index" class="mb-4 bg-gray-50 p-3 rounded border border-gray-200">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-semibold text-sm truncate pr-2">{{ item.nombre }}</h4>
+                                <button @click="removeFromCart(index)" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" v-model.number="item.cantidad" min="0.1" step="0.1" class="w-16 p-1 text-sm border rounded text-center">
+                                <span class="text-xs text-gray-500">x</span>
+                                <input type="number" v-model.number="item.precio_unitario" class="w-24 p-1 text-sm border rounded text-right">
+                                <span class="font-bold text-sm ml-auto text-blue-700">{{ formatMoney(item.cantidad * item.precio_unitario) }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Cliente Selection for Credit -->
+                        <div v-if="tipoVenta === 'credito'" class="mt-6 border-t pt-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-bold text-sm text-blue-800"><i class="fa-solid fa-user-tag mr-1"></i> Datos del Cliente (Fiao)</h3>
+                                <span v-if="buscandoCliente" class="text-xs text-gray-500"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</span>
+                                <span v-else-if="clienteForm.encontrado" class="text-xs text-green-600 font-bold"><i class="fa-solid fa-check-circle"></i> Encontrado</span>
+                                <span v-else-if="clienteForm.cedula && !buscandoCliente" class="text-xs text-blue-500"><i class="fa-solid fa-plus-circle"></i> Nuevo</span>
+                            </div>
+                            
+                            <div class="space-y-2 bg-blue-50 p-2 rounded border border-blue-100">
+                                <div>
+                                    <label class="text-xs text-gray-600 font-semibold">Cédula / NIT</label>
+                                    <input type="text" v-model="clienteForm.cedula" @blur="buscarCliente" @keyup.enter="buscarCliente" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="Buscar cédula...">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-600 font-semibold">Nombre Completo</label>
+                                    <input type="text" v-model="clienteForm.nombre" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-xs text-gray-600 font-semibold">Teléfono</label>
+                                        <input type="text" v-model="clienteForm.telefono" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-600 font-semibold">Ubicación / Mina</label>
+                                        <input type="text" v-model="clienteForm.ubicacion" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2 mt-3 border-t pt-3 border-gray-200">
+                                <div>
+                                    <label class="text-xs text-gray-600 block">Abono Inicial</label>
+                                    <input type="number" v-model.number="abonoInicial" class="w-full p-2 border rounded text-right bg-green-50">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-xs text-gray-600 block">Días Plazo</label>
+                                        <select v-model="diasPlazoCredito" class="w-full p-2 border rounded">
+                                            <option :value="config.plazo_1">{{ config.plazo_1 }} días</option>
+                                            <option :value="config.plazo_2">{{ config.plazo_2 }} días</option>
+                                            <option value="custom">Otro...</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-600 block">Vencimiento</label>
+                                        <input type="date" v-model="fechaVencimiento" class="w-full p-2 border rounded text-sm bg-gray-100" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-gray-50 border-t">
+                        <div class="flex justify-between mb-4">
+                            <span class="text-lg font-bold">TOTAL</span>
+                            <span class="text-2xl font-bold text-green-600">{{ formatMoney(cartTotal) }}</span>
+                        </div>
+                        <button @click="procesarVenta" :disabled="cart.length === 0 || processingVenta" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 disabled:opacity-50 transition shadow-lg">
+                            <i class="fa-solid fa-check mr-2" v-if="!processingVenta"></i>
+                            <i class="fa-solid fa-spinner fa-spin mr-2" v-else></i>
+                            {{ tipoVenta === 'contado' ? 'COBRAR' : 'GENERAR PAGARÉ' }}
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile Cart Toggle Button -->
+                <button v-show="!isMobileCartOpen" @click="isMobileCartOpen = true" class="md:hidden fixed bottom-24 right-4 bg-blue-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-10">
+                    <i class="fa-solid fa-shopping-cart"></i>
+                    <span v-if="cart.length > 0" class="absolute top-0 right-0 bg-red-500 text-xs w-5 h-5 rounded-full flex items-center justify-center">{{ cart.length }}</span>
+                </button>
+            </div>
+
+            <!-- VIEW: CARTERA -->
+            <div v-show="currentView === 'cartera'" class="p-6">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Dashboard Financiero</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Capital en Inventario</p>
+                        <h3 class="text-3xl font-bold text-gray-800">{{ formatMoney(dashboardStats.capital_inventario) }}</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Dinero en Caja (Hoy)</p>
+                        <h3 class="text-3xl font-bold text-gray-800">{{ formatMoney(dashboardStats.dinero_caja) }}</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-red-500">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Plata en la Calle</p>
+                        <h3 class="text-3xl font-bold text-gray-800">{{ formatMoney(dashboardStats.plata_calle) }}</h3>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow overflow-hidden">
+                    <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                        <h3 class="text-lg font-bold">Listado de Fiaos (Créditos Activos)</h3>
+                        <button @click="loadDeudores" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 text-sm">
+                                    <th class="p-3">Estado</th>
+                                    <th class="p-3">Cliente</th>
+                                    <th class="p-3">Venta</th>
+                                    <th class="p-3">Vence</th>
+                                    <th class="p-3 text-right">Saldo</th>
+                                    <th class="p-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="d in deudoresActivos" :key="d.credito_id" class="border-b hover:bg-gray-50">
+                                    <td class="p-3 text-center">
+                                        <div class="w-4 h-4 rounded-full mx-auto" 
+                                             :class="{'bg-green-500': d.color==='green', 'bg-yellow-400': d.color==='yellow', 'bg-red-500': d.color==='red'}"></div>
+                                    </td>
+                                    <td class="p-3">
+                                        <p class="font-bold">{{ d.cliente_nombre }}</p>
+                                        <p class="text-xs text-gray-500"><i class="fa-solid fa-phone"></i> {{ d.cliente_telefono }}</p>
+                                    </td>
+                                    <td class="p-3 text-sm">{{ formatDate(d.fecha_venta) }}</td>
+                                    <td class="p-3 text-sm font-semibold" :class="{'text-red-600': d.color==='red'}">{{ formatDate(d.fecha_vencimiento) }}</td>
+                                    <td class="p-3 text-right font-bold">{{ formatMoney(d.saldo_pendiente) }}</td>
+                                    <td class="p-3 text-center space-x-2">
+                                        <button @click="openAbonoModal(d)" class="bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 text-sm" title="Abonar">
+                                            <i class="fa-solid fa-money-bill-wave"></i>
+                                        </button>
+                                        <button @click="sendWhatsApp(d)" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm" title="Recordatorio WA">
+                                            <i class="fa-brands fa-whatsapp"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="deudoresActivos.length === 0">
+                                    <td colspan="6" class="p-6 text-center text-gray-500">No hay créditos activos pendientes.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: INVENTARIO -->
+            <div v-show="currentView === 'inventario'" class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Inventario</h2>
+                    <button @click="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+                        <i class="fa-solid fa-plus mr-1"></i> Nuevo Producto
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow overflow-hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-max">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-sm">
+                                <th class="p-3">Nombre</th>
+                                <th class="p-3">Unidad</th>
+                                <th class="p-3 text-right">P. Costo</th>
+                                <th class="p-3 text-right">P. Contado</th>
+                                <th class="p-3 text-right">P. Crédito</th>
+                                <th class="p-3 text-center">Stock</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="p in productos" :key="p.id" class="border-b hover:bg-gray-50">
+                                <td class="p-3 font-medium">{{ p.nombre }}</td>
+                                <td class="p-3 text-sm text-gray-500">{{ p.unidad }}</td>
+                                <td class="p-3 text-right">{{ formatMoney(p.precio_costo) }}</td>
+                                <td class="p-3 text-right text-blue-600 font-bold">{{ formatMoney(p.precio_contado) }}</td>
+                                <td class="p-3 text-right text-purple-600 font-bold">{{ formatMoney(p.precio_credito) }}</td>
+                                <td class="p-3 text-center">
+                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="parseFloat(p.stock) <= parseFloat(p.stock_minimo) ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'">
+                                        {{ p.stock }}
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center space-x-2">
+                                    <button @click="openProductModal(p)" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button @click="deleteProduct(p.id)" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW: CONFIG -->
+            <div v-show="currentView === 'config'" class="p-6 max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Ajustes del Sistema</h2>
+                
+                <form @submit.prevent="saveConfig" class="space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-bold mb-4 border-b pb-2">Datos del Negocio</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-sm mb-1">Nombre Comercial</label><input v-model="config.nombre_comercial" type="text" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm mb-1">Razón Social</label><input v-model="config.razon_social" type="text" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm mb-1">NIT / Cédula</label><input v-model="config.nit" type="text" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm mb-1">Teléfonos</label><input v-model="config.telefonos" type="text" class="w-full p-2 border rounded"></div>
+                            <div class="md:col-span-2"><label class="block text-sm mb-1">Dirección</label><input v-model="config.direccion" type="text" class="w-full p-2 border rounded"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <h3 class="text-xl font-bold mb-4 border-b pb-2">Parámetros de Crédito</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label class="block text-sm mb-1">Plazo 1 (Días)</label><input v-model.number="config.plazo_1" type="number" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm mb-1">Plazo 2 (Días)</label><input v-model.number="config.plazo_2" type="number" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm mb-1">Recargo Mora (%)</label><input v-model.number="config.recargo_credito" type="number" step="0.1" class="w-full p-2 border rounded"></div>
+                            <div class="md:col-span-3">
+                                <label class="block text-sm mb-1">Texto Legal Pagaré</label>
+                                <textarea v-model="config.texto_pagare" rows="3" class="w-full p-2 border rounded text-sm"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow hover:bg-blue-700">Guardar Cambios</button>
+                </form>
+            </div>
+
+        </main>
+
+        <!-- MODAL: ABONO -->
+        <div v-if="abonoModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+                <h3 class="text-xl font-bold mb-4">Registrar Abono</h3>
+                <p class="text-sm text-gray-600 mb-2">Cliente: <strong>{{ abonoModal.data.cliente_nombre }}</strong></p>
+                <p class="text-sm text-gray-600 mb-4">Saldo Actual: <strong class="text-red-600">{{ formatMoney(abonoModal.data.saldo_pendiente) }}</strong></p>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-1">Monto a abonar ($)</label>
+                    <input type="number" v-model.number="abonoModal.monto" :max="abonoModal.data.saldo_pendiente" class="w-full p-3 border rounded text-xl text-right font-bold bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button @click="abonoModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
+                    <button @click="procesarAbono" :disabled="abonoModal.monto <= 0 || abonoModal.monto > abonoModal.data.saldo_pendiente" class="flex-1 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 disabled:opacity-50">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: PRODUCTO -->
+        <div v-if="productModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold mb-4">{{ productModal.isEdit ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
+                <form @submit.prevent="saveProduct" class="space-y-3">
+                    <div><label class="block text-xs font-bold">Nombre</label><input v-model="productModal.data.nombre" required type="text" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold">Unidad (ej. Kg, Und, Galón)</label><input v-model="productModal.data.unidad" required type="text" class="w-full p-2 border rounded"></div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-bold">Precio Costo</label><input v-model.number="productModal.data.precio_costo" type="number" class="w-full p-2 border rounded"></div>
+                        <div><label class="block text-xs font-bold">Precio Contado</label><input v-model.number="productModal.data.precio_contado" type="number" class="w-full p-2 border rounded bg-blue-50"></div>
+                        <div><label class="block text-xs font-bold">Precio Crédito</label><input v-model.number="productModal.data.precio_credito" type="number" class="w-full p-2 border rounded bg-purple-50"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-bold">Stock Actual</label><input v-model.number="productModal.data.stock" type="number" step="0.1" class="w-full p-2 border rounded"></div>
+                        <div><label class="block text-xs font-bold">Alerta Stock Mínimo</label><input v-model.number="productModal.data.stock_minimo" type="number" step="0.1" class="w-full p-2 border rounded"></div>
+                    </div>
+
+                    <div class="flex space-x-3 mt-4 pt-4 border-t">
+                        <button type="button" @click="productModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
+                        <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Hidden div for PDF generation template -->
+        <div id="pdf-container" style="display:none;"></div>
+
+    </div>
+
+    <script src="assets/print_templates.js"></script>
+    <script src="assets/app.js"></script>
+</body>
+</html>

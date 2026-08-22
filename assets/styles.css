@@ -1,0 +1,26 @@
+/* Custom overrides and utilities not easily achievable with Tailwind classes */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1; 
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8; 
+}
+
+/* Print utilities (when not using html2pdf) */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
