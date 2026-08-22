@@ -17,6 +17,21 @@
 
 ---
 
+## 📌 Tabla de Contenidos
+
+- [Acerca del Proyecto](#-acerca-del-proyecto)
+- [Características Principales](#-características-principales)
+- [Stack Tecnológico](#️-stack-tecnológico)
+- [Vista Previa](#-vista-previa)
+- [Instalación](#-instalación)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Roadmap](#-roadmap)
+- [Contribuir](#-contribuir)
+- [Autor](#-autor)
+- [Licencia](#-licencia)
+
+---
+
 ## 📖 Acerca del Proyecto
 
 > **MINERVOX** es una aplicación web progresiva (**PWA**) de **Punto de Venta (POS)** y **gestión de inventario**, diseñada específicamente para comercializadoras de insumos y reactivos químicos de minería.
@@ -106,11 +121,11 @@ Alertas automáticas de reabastecimiento para productos críticos, evitando desa
 
 ```bash
 # 1️⃣ Clona el repositorio
-git clone https://github.com/tu-usuario/minervox.git
-cd minervox
+git clone https://github.com/luis06-op/minervox-pos.git
+cd minervox-pos
 
 # 2️⃣ Configura la base de datos
-mysql -u root -p < database/minervox.sql
+mysql -u root -p < database.sql
 
 # 3️⃣ Configura las credenciales
 cp config.example.php config.php
@@ -130,15 +145,11 @@ php -S localhost:8000
 ## 📂 Estructura del Proyecto
 
 ```
-minervox/
+minervox-pos/
 ├── 📁 api/              # Endpoints PHP (PDO)
 ├── 📁 assets/           # CSS, JS, íconos, imágenes
-├── 📁 database/         # Esquema SQL / migraciones
-├── 📁 pdf/              # Plantillas jsPDF / FPDF
-├── 📁 src/              # Componentes Vue.js
-├── 📄 config.php        # Configuración de conexión
+├── 📄 database.sql      # Esquema de la base de datos
 ├── 📄 index.html        # Punto de entrada PWA
-├── 📄 manifest.json     # Configuración PWA
 └── 📄 README.md
 ```
 
@@ -153,6 +164,30 @@ minervox/
 - [ ] Notificaciones automáticas por WhatsApp API
 - [ ] Modo offline completo (Service Workers)
 - [ ] Roles y permisos multiusuario
+
+---
+
+## 🤝 Contribuir
+
+¡Las contribuciones son bienvenidas! 🎉
+
+1. Haz un **Fork** del proyecto
+2. Crea tu rama (`git checkout -b feature/nueva-funcionalidad`)
+3. Haz **commit** de tus cambios (`git commit -m 'Agrega nueva funcionalidad'`)
+4. Sube tu rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un **Pull Request**
+
+---
+
+## 👤 Autor
+
+<div align="center">
+
+**luis06-op**
+
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/luis06-op)
+
+</div>
 
 ---
 
