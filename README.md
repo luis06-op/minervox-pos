@@ -9,7 +9,8 @@
 ![PHP](https://img.shields.io/badge/PHP-8%2B-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-MariaDB-005C84?style=for-the-badge&logo=mysql&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-![Vue.js](https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![XAMPP](https://img.shields.io/badge/XAMPP-FB7A24?style=for-the-badge&logo=xampp&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-Ready-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
 ![License](https://img.shields.io/badge/Licencia-MIT-yellow?style=for-the-badge)
 
@@ -20,10 +21,10 @@
 ## 📌 Tabla de Contenidos
 
 - [Acerca del Proyecto](#-acerca-del-proyecto)
-- [Características Principales](#-características-principales)
+- [Módulos Principales](#-módulos-principales)
 - [Stack Tecnológico](#️-stack-tecnológico)
 - [Vista Previa](#-vista-previa)
-- [Instalación](#-instalación)
+- [Configuración y Entorno Local](#️-configuración-y-entorno-local)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Roadmap](#-roadmap)
 - [Contribuir](#-contribuir)
@@ -34,55 +35,47 @@
 
 ## 📖 Acerca del Proyecto
 
-> **MINERVOX** es una aplicación web progresiva (**PWA**) de **Punto de Venta (POS)** y **gestión de inventario**, diseñada específicamente para comercializadoras de insumos y reactivos químicos de minería.
+> **MINERVOX** es un sistema web progresivo (**PWA**) de **Punto de Venta (POS)**, diseñado a la medida para la comercialización de insumos y reactivos químicos mineros en **Puerto Claver, El Bagre**.
 
-El sistema optimiza:
+El aplicativo centraliza la gestión de ventas de contado, el control de inventario de **sustancias controladas** y la administración de cartera (ventas a crédito o *"fiaos"*), automatizando la creación de pagarés en PDF y la comunicación directa con el cliente.
 
 | 🎯 Objetivo | Descripción |
 |---|---|
-| 📦 **Control de stock** | Inventario en tiempo real con alertas de reabastecimiento |
-| 🧾 **Comprobantes en PDF** | Facturas y vales de crédito generados automáticamente |
-| 💰 **Gestión de cartera** | Seguimiento ágil de créditos y "fiaos" |
-| 📱 **Mobile-first** | Adaptado completamente a dispositivos móviles |
+| 📦 **Sustancias controladas** | Inventario en tiempo real de insumos y reactivos químicos mineros |
+| 🧾 **Pagarés automatizados** | Generación instantánea de vales de crédito en PDF |
+| 💰 **Gestión de cartera** | Seguimiento de ventas a crédito ("fiaos") con alertas de vencimiento |
+| 📱 **Mobile-first** | Interfaz ágil optimizada para ventas en mostrador desde cualquier dispositivo |
 
 ---
 
-## ✨ Características Principales
+## ✨ Módulos Principales
 
 <table>
 <tr>
 <td width="50%">
 
-### 🛒 Punto de Venta Dinámico
-Facturación rápida con cálculo automático de precios diferenciados (**Contado** vs. **Crédito**).
+### 🛒 Facturación Dual
+Interfaz POS que alterna instantáneamente entre tarifas de **Contado** y **Crédito**.
 
 </td>
 <td width="50%">
 
-### 🚦 Gestión de Cartera Inteligente
-Control de cuentas por cobrar con alertas visuales de vencimiento — *Semáforo de deudas*.
+### 🔍 Gestión de Clientes en Caliente
+Formulario inteligente que busca por **Cédula/NIT** y autocompleta los datos, permitiendo editar o registrar clientes nuevos sin abandonar el flujo de venta.
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-### 📄 Generador de Pagarés
-Emisión automática de vales de entrega en PDF, listos para imprimir o compartir por **WhatsApp**.
+### 🚦 Control de Cartera (Semáforo)
+Panel financiero que monitorea los plazos otorgados (**8 a 15 días**), registra abonos y genera enlaces dinámicos para enviar cobros y comprobantes vía **WhatsApp**.
 
 </td>
 <td width="50%">
 
-### 🔍 Buscador Autocompletable
-Búsqueda en tiempo real de clientes por **Cédula/NIT** para agilizar las ventas en mostrador.
-
-</td>
-</tr>
-<tr>
-<td width="50%" colspan="2">
-
-### 📦 Control de Inventario
-Alertas automáticas de reabastecimiento para productos críticos, evitando desabastos.
+### 📦 Inventario Inteligente
+Seguimiento detallado del stock de productos base (*Zinc en viruta, Ácido Nítrico, Cal, Cucharas, Bórax*) con alertas preventivas de descapitalización al alcanzar el mínimo de canecas.
 
 </td>
 </tr>
@@ -96,10 +89,10 @@ Alertas automáticas de reabastecimiento para productos críticos, evitando desa
 
 | Capa | Tecnologías |
 |:---:|:---|
-| 🎨 **Frontend** | ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white) ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white) ![JS](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black) ![Vue](https://img.shields.io/badge/Vue.js-4FC08D?logo=vue.js&logoColor=white) |
-| ⚙️ **Backend** | ![PHP](https://img.shields.io/badge/PHP_8+-777BB4?logo=php&logoColor=white) `Arquitectura PDO` |
-| 🗄️ **Base de Datos** | ![MySQL](https://img.shields.io/badge/MySQL-005C84?logo=mysql&logoColor=white) ![MariaDB](https://img.shields.io/badge/MariaDB-003545?logo=mariadb&logoColor=white) |
-| 📚 **Librerías** | `jsPDF` · `FPDF` · Generación de PDFs |
+| 🎨 **Frontend** | ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white) ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white) ![JS](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black) — Tailwind vía CDN, diseño **Mobile-First**, interactividad con **JS ES6+** |
+| ⚙️ **Backend** | ![PHP](https://img.shields.io/badge/PHP_8+-777BB4?logo=php&logoColor=white) `POO` + `PDO` — conexiones seguras y consultas eficientes |
+| 🗄️ **Base de Datos** | ![MySQL](https://img.shields.io/badge/MySQL-005C84?logo=mysql&logoColor=white) ![MariaDB](https://img.shields.io/badge/MariaDB-003545?logo=mariadb&logoColor=white) — arquitectura relacional |
+| 📚 **Librerías** | `jsPDF` · `FPDF` — renderizado y generación instantánea de vales de crédito |
 
 </div>
 
@@ -115,30 +108,30 @@ Alertas automáticas de reabastecimiento para productos críticos, evitando desa
 
 </div>
 
+
 ---
 
-## ⚙️ Instalación
+## ⚙️ Configuración y Entorno Local
+
+MINERVOX está optimizado para un despliegue ágil en entornos locales mediante **XAMPP**, sin necesidad de dependencias ni compiladores externos (**Node.js / npm**).
 
 ```bash
-# 1️⃣ Clona el repositorio
+# 1️⃣ Clona (o descarga) el repositorio dentro del directorio htdocs de XAMPP
+cd /ruta/a/xampp/htdocs
 git clone https://github.com/luis06-op/minervox-pos.git
-cd minervox-pos
-
-# 2️⃣ Configura la base de datos
-mysql -u root -p < database.sql
-
-# 3️⃣ Configura las credenciales
-cp config.example.php config.php
-# Edita config.php con tus datos de conexión (host, usuario, password, DB)
-
-# 4️⃣ Levanta un servidor local (ej. con PHP)
-php -S localhost:8000
-
-# 5️⃣ Abre en tu navegador
-# http://localhost:8000
 ```
 
-> ⚠️ Requisitos: **PHP 8+**, **MySQL/MariaDB**, extensión `PDO` habilitada.
+**2️⃣ Inicia Apache y MySQL** desde el Panel de Control de XAMPP.
+
+**3️⃣ Importa la base de datos:**
+Abre `phpMyAdmin` (`http://localhost/phpmyadmin`), crea una base de datos nueva e importa el script `database.sql` incluido en el repositorio — el modelo de datos queda listo sin pasos adicionales.
+
+**4️⃣ Accede a la aplicación** desde el navegador:
+```
+http://localhost/minervox-pos/
+```
+
+> ⚠️ Requisitos: **XAMPP** (Apache + PHP 8+ + MySQL/MariaDB), extensión `PDO` habilitada.
 
 ---
 
@@ -183,7 +176,7 @@ minervox-pos/
 
 <div align="center">
 
-**luis06-op**
+**Luis Muñoz**
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/luis06-op)
 
