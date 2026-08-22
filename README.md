@@ -35,7 +35,7 @@
 
 ## 📖 Acerca del Proyecto
 
-> **MINERVOX** es un sistema web progresivo (**PWA**) de **Punto de Venta (POS)**, diseñado a la medida para la comercialización de insumos y reactivos químicos mineros en **Puerto Claver, El Bagre**.
+> **MINERVOX** es un sistema web progresivo (**PWA**) de **Punto de Venta (POS)**, diseñado a la medida para la comercialización de insumos y reactivos químicos mineros.
 
 El aplicativo centraliza la gestión de ventas de contado, el control de inventario de **sustancias controladas** y la administración de cartera (ventas a crédito o *"fiaos"*), automatizando la creación de pagarés en PDF y la comunicación directa con el cliente.
 
