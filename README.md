@@ -75,7 +75,7 @@ Panel financiero que monitorea los plazos otorgados (**8 a 15 días**), registra
 <td width="50%">
 
 ### 📦 Inventario Inteligente
-Seguimiento detallado del stock de productos base (*Zinc en viruta, Ácido Nítrico, Cal, Cucharas, Bórax*) con alertas preventivas de descapitalización al alcanzar el mínimo de canecas.
+Seguimiento detallado del stock de productos base con alertas preventivas de descapitalización al alcanzar el mínimo de productos.
 
 </td>
 </tr>
