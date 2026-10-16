@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MINERVOX | Gestión y facturación de insumos mineros en El Bagre</title>
+<meta name="description" content="Sistema web offline para inventario, facturación y control de cartera de insumos mineros en el Bajo Cauca.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { navy: '#0f172a', slate2: '#1e293b', royal: '#2563eb', amber2: '#d97706' },
+  fontFamily: { display: ['"Barlow Condensed"', 'Impact', 'sans-serif'], sans: ['Inter', 'system-ui', 'sans-serif'] }
+}}};
+</script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; color: #0f172a; }
+  .hero-bg { background: radial-gradient(900px 400px at 85% 0%, rgba(217,119,6,.18), transparent 60%), #0f172a; }
+  .strata { background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 28px); }
+  .faq-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
+  .faq-item[data-open="true"] .faq-body { grid-template-rows: 1fr; }
+  .faq-item[data-open="true"] .chev { transform: rotate(180deg); }
+  .faq-body > div { overflow: hidden; }
+  .chev { transition: transform .3s; }
+  .rise { animation: rise .8s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  :focus-visible { outline: 3px solid #d97706; outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body class="bg-slate-50 antialiased">
+
+<!-- NAV -->
+<header class="fixed top-0 inset-x-0 z-40 bg-navy/95 backdrop-blur border-b border-white/10">
+  <nav class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+    <a href="#inicio" class="font-display text-2xl font-bold tracking-wide text-white">MINERVOX <span aria-hidden="true">⛏️</span></a>
+    <ul class="hidden md:flex gap-7 text-sm text-slate-300">
+      <li><a class="hover:text-amber-400" href="#problema">Problema</a></li>
+      <li><a class="hover:text-amber-400" href="#solucion">Solución</a></li>
+      <li><a class="hover:text-amber-400" href="#modulos">Módulos</a></li>
+      <li><a class="hover:text-amber-400" href="#creador">Creador</a></li>
+      <li><a class="hover:text-amber-400" href="#contacto">Contacto</a></li>
+    </ul>
+    <div class="flex items-center gap-3">
+      <button data-open-modal class="hidden sm:block bg-royal hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-md">Solicitar Demostración</button>
+      <button id="menuBtn" class="md:hidden text-white" aria-label="Abrir menú"><i data-lucide="menu"></i></button>
+    </div>
+  </nav>
+  <ul id="mobileMenu" class="hidden md:hidden bg-slate2 px-5 py-3 space-y-3 text-slate-200 text-sm">
+    <li><a href="#problema">Problema</a></li><li><a href="#solucion">Solución</a></li>
+    <li><a href="#modulos">Módulos</a></li><li><a href="#creador">Creador</a></li><li><a href="#contacto">Contacto</a></li>
+    <li><button data-open-modal class="bg-royal text-white font-semibold px-4 py-2 rounded-md">Solicitar Demostración</button></li>
+  </ul>
+</header>
+
+<!-- HERO -->
+<section id="inicio" class="hero-bg strata pt-32 pb-20 text-white">
+  <div class="max-w-6xl mx-auto px-5 grid lg:grid-cols-2 gap-12 items-center">
+    <div class="rise">
+      <h1 class="font-display text-5xl sm:text-6xl font-bold leading-[1.02]">La Solución Inteligente para la Gestión y Facturación de Insumos Mineros en El Bagre</h1>
+      <p class="mt-6 text-lg text-slate-300 max-w-xl">Corre en tu propio computador con XAMPP, sin depender de internet. Controla el inventario de cianuro, zinc y ácidos, cambia automáticamente entre precio de contado y de crédito, y lleva la cartera de tus clientes con pagaré en PDF y cobro por WhatsApp.</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="#solucion" class="bg-amber2 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-md">Probar Demostración Local</a>
+        <a href="https://github.com/luis06-op/minervox-pos" target="_blank" rel="noopener" class="inline-flex items-center gap-2 border border-white/30 hover:bg-white/10 font-semibold px-6 py-3 rounded-md"><i data-lucide="github"></i>Ver en GitHub</a>
+      </div>
+    </div>
+
+    <!-- Mockup POS -->
+    <div class="rise" style="animation-delay:.2s" aria-label="Maqueta del punto de venta de MINERVOX">
+      <div class="bg-slate2 rounded-xl border border-white/10 shadow-2xl overflow-hidden">
+        <div class="flex items-center gap-1.5 px-4 py-2.5 bg-navy border-b border-white/10">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
+          <span class="ml-3 text-xs text-slate-400">localhost/minervox/</span>
+        </div>
+        <div class="grid grid-cols-5 text-slate-800 bg-slate-100 text-xs">
+          <div class="col-span-3 p-4">
+            <div class="flex justify-between items-center mb-3">
+              <b class="text-sm">Nueva venta</b>
+              <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">Crédito · 15 días</span>
+            </div>
+            <div class="bg-white rounded-md border border-slate-200 divide-y divide-slate-100">
+              <div class="flex justify-between p-2.5"><span>Cianuro de sodio · caneca 50 kg</span><b>$ 1.300.000</b></div>
+              <div class="flex justify-between p-2.5"><span>Ácido nítrico 68% · galón</span><b>$ 310.000</b></div>
+              <div class="flex justify-between p-2.5"><span>Bórax · saco 25 kg</span><b>$ 145.000</b></div>
+            </div>
+            <div class="mt-3 flex justify-between items-center">
+              <span class="text-slate-500">Cliente: Mina La Esperanza</span>
+              <b class="text-base">$ 1.755.000</b>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <span class="flex-1 text-center bg-royal text-white rounded-md py-2 font-semibold">Facturar y generar pagaré</span>
+            </div>
+          </div>
+          <div class="col-span-2 p-4 bg-white border-l border-slate-200">
+            <b class="text-sm">Cartera</b>
+            <ul class="mt-3 space-y-2.5">
+              <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span>Al día · 24</li>
+              <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-500"></span>Por vencer · 7</li>
+              <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span>Vencidos · 3</li>
+            </ul>
+            <div class="mt-4 p-2.5 rounded-md bg-red-50 text-red-700 border border-red-200">Stock bajo: cianuro de sodio, quedan 2 canecas.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEMA -->
+<section id="problema" class="py-20">
+  <div class="max-w-6xl mx-auto px-5">
+    <h2 class="font-display text-4xl sm:text-5xl font-bold max-w-2xl">Lo que frena al comercio minero en Puerto Claver y El Bagre</h2>
+    <p class="mt-3 text-slate-600 max-w-2xl">Los sistemas genéricos no fueron pensados para el Bajo Cauca. Estos son los tres problemas que MINERVOX resuelve.</p>
+    <div class="mt-10 grid md:grid-cols-3 gap-6">
+      <article class="bg-white border border-slate-200 border-t-4 border-t-amber2 rounded-lg p-6 shadow-sm">
+        <i data-lucide="wallet" class="w-9 h-9 text-amber2"></i>
+        <h3 class="mt-4 font-semibold text-lg">Descapitalización por “fiaos” sin control</h3>
+        <p class="mt-2 text-slate-600 text-sm">Entre el 60% y el 80% de las ventas se hacen a crédito y se anotan en cuadernos. Sin fecha de vencimiento ni soporte firmado, la plata en la calle se vuelve dinero que no regresa.</p>
+      </article>
+      <article class="bg-white border border-slate-200 border-t-4 border-t-royal rounded-lg p-6 shadow-sm">
+        <i data-lucide="wifi-off" class="w-9 h-9 text-royal"></i>
+        <h3 class="mt-4 font-semibold text-lg">Fallas continuas de internet</h3>
+        <p class="mt-2 text-slate-600 text-sm">Con las caídas de señal y de energía, un sistema en la nube deja de facturar. MINERVOX es local: el mostrador sigue vendiendo y el cliente no se va con la competencia.</p>
+      </article>
+      <article class="bg-white border border-slate-200 border-t-4 border-t-red-600 rounded-lg p-6 shadow-sm">
+        <i data-lucide="flask-conical" class="w-9 h-9 text-red-600"></i>
+        <h3 class="mt-4 font-semibold text-lg">Riesgo legal con sustancias reguladas</h3>
+        <p class="mt-2 text-slate-600 text-sm">Vender cianuro o ácido nítrico sin registrar cédula, cantidad y fecha del comprador expone al negocio a sanciones. Aquí cada venta queda con su cliente y su soporte.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUCION -->
+<section id="solucion" class="py-16 bg-navy text-white">
+  <div class="max-w-6xl mx-auto px-5 grid md:grid-cols-2 gap-10 items-center">
+    <div>
+      <h2 class="font-display text-4xl sm:text-5xl font-bold">Un sistema que vive en tu mostrador, no en la nube</h2>
+      <p class="mt-4 text-slate-300">MINERVOX corre en un servidor local (XAMPP: Apache, PHP y MariaDB) dentro de tu negocio. Facturas, controlas el inventario y cobras la cartera aunque no haya señal en toda la zona.</p>
+    </div>
+    <dl class="grid grid-cols-3 gap-4 text-center">
+      <div class="bg-slate2 rounded-lg p-5"><dt class="text-xs text-slate-400">Conexión requerida</dt><dd class="font-display text-4xl text-amber-400 mt-1">0</dd></div>
+      <div class="bg-slate2 rounded-lg p-5"><dt class="text-xs text-slate-400">Tarifas de venta</dt><dd class="font-display text-4xl text-amber-400 mt-1">2</dd></div>
+      <div class="bg-slate2 rounded-lg p-5"><dt class="text-xs text-slate-400">Plazo de crédito</dt><dd class="font-display text-3xl text-amber-400 mt-2">8–15 d</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- MODULOS -->
+<section id="modulos" class="py-20">
+  <div class="max-w-6xl mx-auto px-5">
+    <h2 class="font-display text-4xl sm:text-5xl font-bold">Módulos pensados para la minería</h2>
+    <div class="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <article class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+        <i data-lucide="server" class="w-8 h-8 text-royal"></i>
+        <h3 class="mt-3 font-semibold text-lg">Modo Offline-First (XAMPP)</h3>
+        <p class="mt-2 text-sm text-slate-600">Funciona sin conexión a internet. Tus datos quedan en tu equipo, en una base de datos MariaDB propia, y siempre puedes vender.</p>
+      </article>
+      <article class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+        <i data-lucide="tags" class="w-8 h-8 text-royal"></i>
+        <h3 class="mt-3 font-semibold text-lg">Precios Dinámicos</h3>
+        <p class="mt-2 text-sm text-slate-600">Cada producto tiene precio de contado y de crédito. Al cambiar el tipo de venta, el carrito se recalcula solo; además puedes ajustar precio y cantidad antes de cobrar.</p>
+      </article>
+      <article class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+        <i data-lucide="traffic-cone" class="w-8 h-8 text-royal"></i>
+        <h3 class="mt-3 font-semibold text-lg">Semáforo de Cartera</h3>
+        <p class="mt-2 text-sm text-slate-600">Verde: faltan más de 2 días. Amarillo: vence hoy o en los próximos 2 días. Rojo: plazo vencido. Registra abonos y el crédito pasa a pagado al llegar a cero.</p>
+      </article>
+      <article class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+        <i data-lucide="file-signature" class="w-8 h-8 text-royal"></i>
+        <h3 class="mt-3 font-semibold text-lg">Trazabilidad Legal</h3>
+        <p class="mt-2 text-sm text-slate-600">Genera el vale de venta o el pagaré en PDF (formato ticket de 80 mm) con espacio para firma y huella. El texto legal del pagaré lo editas en Ajustes.</p>
+      </article>
+      <article class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+        <i data-lucide="user-search" class="w-8 h-8 text-royal"></i>
+        <h3 class="mt-3 font-semibold text-lg">Clientes por Cédula</h3>
+        <p class="mt-2 text-sm text-slate-600">Escribes la cédula o NIT y el sistema autocompleta nombre, teléfono y ubicación. Si es nuevo, queda registrado al confirmar la venta.</p>
+      </article>
+      <article class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+        <i data-lucide="package-check" class="w-8 h-8 text-amber2"></i>
+        <h3 class="mt-3 font-semibold text-lg">Stock de Alto Valor</h3>
+        <p class="mt-2 text-sm text-slate-600">Alerta visual cuando las canecas de cianuro o cualquier reactivo llegan a su stock mínimo, antes de quedarte sin existencias.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- CREADOR -->
+<section id="creador" class="py-20 bg-white border-y border-slate-200">
+  <div class="max-w-4xl mx-auto px-5">
+    <h2 class="font-display text-4xl sm:text-5xl font-bold">Desarrollado en El Bagre</h2>
+    <article class="mt-10 flex flex-col sm:flex-row gap-8 items-center border border-slate-200 rounded-xl p-8 bg-slate-50">
+      <div class="shrink-0 w-28 h-28 rounded-full bg-navy text-amber-400 font-display text-5xl flex items-center justify-center ring-4 ring-amber-200">LM</div>
+      <div class="text-center sm:text-left">
+        <h3 class="font-semibold text-xl">Luis Ángel Muñoz Márquez</h3>
+        <p class="text-sm text-royal font-semibold">Desarrollador de MINERVOX</p>
+        <p class="mt-3 text-slate-600">Aprendiz de programación de software del Bajo Cauca construyendo tecnología para el comercio de su propia región. El código del proyecto es público en GitHub.</p>
+        <div class="mt-5 flex flex-wrap justify-center sm:justify-start gap-3">
+          <a data-wa class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2.5 rounded-md" href="#" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>WhatsApp</a>
+          <a data-mail class="inline-flex items-center gap-2 bg-royal hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-md" href="#"><i data-lucide="mail"></i>Correo</a>
+          <a href="https://github.com/luis06-op/minervox-pos" target="_blank" rel="noopener" class="inline-flex items-center gap-2 border border-slate-300 hover:bg-slate-100 text-sm font-semibold px-5 py-2.5 rounded-md"><i data-lucide="github"></i>Repositorio</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="py-20">
+  <div class="max-w-3xl mx-auto px-5">
+    <h2 class="font-display text-4xl sm:text-5xl font-bold">Preguntas frecuentes</h2>
+    <div class="mt-8 space-y-3">
+      <div class="faq-item bg-white border border-slate-200 rounded-lg" data-open="false">
+        <button class="w-full flex justify-between items-center gap-4 text-left p-5 font-semibold" aria-expanded="false">¿Se necesita internet para que MINERVOX funcione en el negocio?<i data-lucide="chevron-down" class="chev shrink-0"></i></button>
+        <div class="faq-body"><div><p class="px-5 pb-5 text-slate-600 text-sm">No. MINERVOX funciona de manera local sobre un servidor XAMPP instalado en tu computador. Facturas, consultas inventario y cobras cartera sin conexión.</p></div></div>
+      </div>
+      <div class="faq-item bg-white border border-slate-200 rounded-lg" data-open="false">
+        <button class="w-full flex justify-between items-center gap-4 text-left p-5 font-semibold" aria-expanded="false">¿Cómo ayuda el sistema a recuperar la cartera vencida de los mineros?<i data-lucide="chevron-down" class="chev shrink-0"></i></button>
+        <div class="faq-body"><div><p class="px-5 pb-5 text-slate-600 text-sm">Cada venta a crédito queda con fecha de vencimiento, pagaré firmado y estado en el semáforo de cartera. Ves los deudores en rojo, recibes alertas antes del vencimiento y tienes el soporte legal listo para el cobro.</p></div></div>
+      </div>
+      <div class="faq-item bg-white border border-slate-200 rounded-lg" data-open="false">
+        <button class="w-full flex justify-between items-center gap-4 text-left p-5 font-semibold" aria-expanded="false">¿Es seguro para el control de químicos regulados?<i data-lucide="chevron-down" class="chev shrink-0"></i></button>
+        <div class="faq-body"><div><p class="px-5 pb-5 text-slate-600 text-sm">Cada venta de cianuro, ácido nítrico u otros reactivos queda registrada con cliente, cantidad y fecha, y se emite un vale con firma y huella. Eso te da trazabilidad ante una revisión. Los datos permanecen en tu equipo.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / CONTACTO -->
+<section id="contacto" class="py-16 bg-slate2 text-white text-center">
+  <div class="max-w-2xl mx-auto px-5">
+    <h2 class="font-display text-4xl font-bold">Lleva el control de tu negocio a otro nivel</h2>
+    <p class="mt-3 text-slate-300">Cuéntame cómo trabajas y te muestro MINERVOX funcionando en tu local.</p>
+    <div class="mt-6 flex flex-wrap justify-center gap-3">
+      <button data-open-modal class="bg-amber2 hover:bg-amber-600 font-semibold px-7 py-3 rounded-md">Solicitar Demostración</button>
+      <a data-wa class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 font-semibold px-6 py-3 rounded-md" href="#" target="_blank" rel="noopener"><i data-lucide="message-circle"></i>WhatsApp</a>
+      <a data-mail class="inline-flex items-center gap-2 border border-white/30 hover:bg-white/10 font-semibold px-6 py-3 rounded-md" href="#"><i data-lucide="mail"></i>Correo</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-navy text-slate-400 text-sm">
+  <div class="max-w-6xl mx-auto px-5 py-10 grid md:grid-cols-3 gap-8">
+    <div>
+      <p class="font-display text-2xl text-white">MINERVOX ⛏️</p>
+      <p class="mt-2">Sistema web de gestión, facturación y control de cartera para insumos mineros. Código abierto en GitHub.</p>
+    </div>
+    <div>
+      <p class="font-semibold text-white mb-2">Contacto y soporte</p>
+      <ul class="space-y-1">
+        <li><a class="hover:text-amber-400" data-mail href="mailto:munozmarquezluisangel51@gmail.com">munozmarquezluisangel51@gmail.com</a></li>
+        <li><a class="hover:text-amber-400" data-wa href="#" target="_blank" rel="noopener">WhatsApp +57 350 225 4563</a></li>
+        <li><a class="hover:text-amber-400" href="tel:+573502254563">Llamar al +57 350 225 4563</a></li>
+        <li><a class="hover:text-amber-400" href="https://github.com/luis06-op/minervox-pos" target="_blank" rel="noopener">github.com/luis06-op/minervox-pos</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-semibold text-white mb-2">Hecho en el Bajo Cauca</p>
+      <p>Con orgullo desde El Bagre, Antioquia, Colombia, para los comerciantes y mineros de la región.</p>
+    </div>
+  </div>
+  <div class="border-t border-white/10 py-4 text-center text-xs">© <span id="year"></span> MINERVOX. Todos los derechos reservados.</div>
+</footer>
+
+<!-- MODAL -->
+<div id="modal" class="hidden fixed inset-0 z-50 bg-navy/80 items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl">
+    <div class="flex justify-between items-start">
+      <h3 id="modalTitle" class="font-display text-3xl font-bold">Solicitar demostración</h3>
+      <button id="closeModal" aria-label="Cerrar"><i data-lucide="x"></i></button>
+    </div>
+    <form id="demoForm" class="mt-4 space-y-3">
+      <label class="block text-sm font-medium">Nombre<input required class="mt-1 w-full border border-slate-300 rounded-md px-3 py-2" type="text"></label>
+      <label class="block text-sm font-medium">Teléfono<input required class="mt-1 w-full border border-slate-300 rounded-md px-3 py-2" type="text"></label>
+      <label class="block text-sm font-medium">Nombre de tu negocio<input class="mt-1 w-full border border-slate-300 rounded-md px-3 py-2" type="text"></label>
+      <div class="grid grid-cols-2 gap-2">
+        <button data-via="wa" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-md" type="submit">Por WhatsApp</button>
+        <button data-via="mail" class="bg-royal hover:bg-blue-700 text-white font-semibold py-2.5 rounded-md" type="submit">Por correo</button>
+      </div>
+    </form>
+    <p id="okMsg" class="hidden mt-4 text-green-700 bg-green-50 border border-green-200 rounded-md p-3 text-sm">Listo: se abrió tu aplicación con el mensaje preparado. Solo falta presionar enviar.</p>
+  </div>
+</div>
+
+<script>
+  // FAQ acordeón
+  document.querySelectorAll('.faq-item > button').forEach(btn => btn.addEventListener('click', () => {
+    const item = btn.parentElement, open = item.dataset.open === 'true';
+    document.querySelectorAll('.faq-item').forEach(i => { i.dataset.open = 'false'; i.firstElementChild.setAttribute('aria-expanded', 'false'); });
+    if (!open) { item.dataset.open = 'true'; btn.setAttribute('aria-expanded', 'true'); }
+  }));
+
+  // Menú móvil
+  const mm = document.getElementById('mobileMenu');
+  document.getElementById('menuBtn').addEventListener('click', () => mm.classList.toggle('hidden'));
+  mm.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mm.classList.add('hidden')));
+
+  // Modal
+  const modal = document.getElementById('modal'), form = document.getElementById('demoForm'), ok = document.getElementById('okMsg');
+  const openM = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); mm.classList.add('hidden'); };
+  const closeM = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); form.classList.remove('hidden'); ok.classList.add('hidden'); form.reset(); };
+  document.querySelectorAll('[data-open-modal]').forEach(b => b.addEventListener('click', openM));
+  document.getElementById('closeModal').addEventListener('click', closeM);
+  modal.addEventListener('click', e => { if (e.target === modal) closeM(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeM(); });
+  const WA = '573502254563', MAIL = 'munozmarquezluisangel51@gmail.com';
+  const intro = 'Hola Luis, estoy interesado en el proyecto MINERVOX y me gustaría ver una demostración.';
+  const waLink = t => `https://wa.me/${WA}?text=${encodeURIComponent(t)}`;
+  const mailLink = t => `mailto:${MAIL}?subject=${encodeURIComponent('Interesado en MINERVOX')}&body=${encodeURIComponent(t)}`;
+  document.querySelectorAll('[data-wa]').forEach(a => a.href = waLink(intro));
+  document.querySelectorAll('[data-mail]').forEach(a => a.href = mailLink(intro));
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const [nombre, tel, negocio] = [...form.querySelectorAll('input')].map(i => i.value.trim());
+    const t = `${intro}\n\nNombre: ${nombre}\nTeléfono: ${tel}` + (negocio ? `\nNegocio: ${negocio}` : '');
+    if (e.submitter && e.submitter.dataset.via === 'mail') location.href = mailLink(t);
+    else window.open(waLink(t), '_blank', 'noopener');
+    form.classList.add('hidden'); ok.classList.remove('hidden');
+  });
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+  lucide.createIcons();
+</script>
+</body>
+</html>
