@@ -20,7 +20,10 @@
         
         <!-- Sidebar Navigation -->
         <nav class="bg-blue-900 text-white w-full md:w-20 lg:w-64 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-start py-4 md:px-4 md:py-6 shadow-xl z-20">
-            <div class="hidden md:block mb-8 text-center w-full">
+            <!-- El título solo se muestra cuando el menú ya es ancho (lg).
+                 En la barra angosta (md, 768-1023 px) no cabe y se montaba
+                 encima del título de la pantalla. Ahí el menú es solo iconos. -->
+            <div class="hidden lg:block mb-8 text-center w-full">
                 <h1 class="text-2xl font-bold text-blue-300 tracking-wider">MINERVOX</h1>
             </div>
             
