@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 require_once 'db.php';
+require_once 'utilidades.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -77,37 +78,60 @@ if ($method === 'GET') {
         echo json_encode($creditos);
     }
 } elseif ($method === 'POST') {
-    // Registrar abono
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    $credito_id = $data['credito_id'];
-    $monto = $data['monto'];
-    
+    // Registrar abono (el minero viene a pagar su fiao)
+    $data = minervox_leer_json();
+
+    $credito_id  = (int) ($data['credito_id'] ?? 0);
+    $monto       = minervox_numero($data['monto'] ?? 0);
+    $metodo_pago = minervox_metodo_pago($data['metodo_pago'] ?? 'efectivo');
+
+    if ($credito_id <= 0) {
+        minervox_error(400, 'Falta el crédito al que se le abona');
+    }
+    if ($monto <= 0) {
+        minervox_error(400, 'El monto del abono debe ser mayor que cero');
+    }
+
     $pdo->beginTransaction();
     try {
-        // Insertar abono
-        $stmt = $pdo->prepare('INSERT INTO abonos (credito_id, monto) VALUES (?, ?)');
-        $stmt->execute([$credito_id, $monto]);
-        
-        // Actualizar saldo
-        $stmtUpdate = $pdo->prepare('UPDATE cartera_creditos SET saldo_pendiente = saldo_pendiente - ? WHERE id = ?');
-        $stmtUpdate->execute([$monto, $credito_id]);
-        
-        // Verificar si se pagó todo
-        $stmtCheck = $pdo->prepare('SELECT saldo_pendiente FROM cartera_creditos WHERE id = ?');
+        // Se bloquea el crédito para que dos abonos simultáneos no descuadren el saldo.
+        $stmtCheck = $pdo->prepare('SELECT saldo_pendiente, estado FROM cartera_creditos WHERE id = ? FOR UPDATE');
         $stmtCheck->execute([$credito_id]);
-        $saldo = $stmtCheck->fetch()['saldo_pendiente'];
-        
-        if ($saldo <= 0) {
-            $pdo->prepare('UPDATE cartera_creditos SET estado = "pagado", saldo_pendiente = 0 WHERE id = ?')->execute([$credito_id]);
+        $credito = $stmtCheck->fetch();
+
+        if (!$credito) {
+            throw new InvalidArgumentException('El crédito no existe');
         }
-        
+        if ($credito['estado'] === 'pagado') {
+            throw new InvalidArgumentException('Ese fiao ya está pagado');
+        }
+
+        $saldo = round((float) $credito['saldo_pendiente'] - $monto, 2);
+        if ($saldo < 0) {
+            throw new InvalidArgumentException('El abono es mayor que la deuda pendiente');
+        }
+
+        $pdo->prepare('INSERT INTO abonos (credito_id, monto, metodo_pago) VALUES (?, ?, ?)')
+            ->execute([$credito_id, $monto, $metodo_pago]);
+
+        $pdo->prepare('UPDATE cartera_creditos SET saldo_pendiente = ?, estado = ? WHERE id = ?')
+            ->execute([$saldo, $saldo <= 0 ? 'pagado' : 'activo', $credito_id]);
+
         $pdo->commit();
-        echo json_encode(['success' => true]);
-    } catch (\Exception $e) {
+
+        echo json_encode([
+            'success'         => true,
+            'saldo_pendiente' => $saldo,
+            'metodo_pago'     => $metodo_pago,
+        ], JSON_UNESCAPED_UNICODE);
+
+    } catch (InvalidArgumentException $e) {
         $pdo->rollBack();
-        header('HTTP/1.1 500 Internal Server Error');
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        minervox_error(400, $e->getMessage());
+    } catch (\Throwable $e) {
+        $pdo->rollBack();
+        error_log('[MINERVOX][cartera] ' . $e->getMessage());
+        minervox_error(500, 'No se pudo registrar el abono');
     }
 } else {
     header('HTTP/1.1 405 Method Not Allowed');
