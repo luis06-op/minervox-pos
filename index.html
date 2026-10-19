@@ -32,6 +32,10 @@
                 <i class="fa-solid fa-wallet text-xl lg:mr-3"></i>
                 <span class="hidden lg:inline font-semibold">Cartera</span>
             </button>
+            <button @click="currentView = 'plata'; cargarPlata();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'plata'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
+                <i class="fa-solid fa-sack-dollar text-xl lg:mr-3"></i>
+                <span class="hidden lg:inline font-semibold">Mi Plata</span>
+            </button>
             <button @click="currentView = 'inventario'; loadProductos();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'inventario'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
                 <i class="fa-solid fa-boxes-stacked text-xl lg:mr-3"></i>
                 <span class="hidden lg:inline font-semibold">Inventario</span>
@@ -176,6 +180,14 @@
                     </div>
 
                     <div class="p-4 bg-gray-50 border-t">
+                        <div class="mb-3">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">¿Cómo pagó?</label>
+                            <select v-model="metodoPago" class="w-full p-2 border rounded-lg">
+                                <option value="efectivo">Efectivo (entra a la caja)</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
                         <div class="flex justify-between mb-4">
                             <span class="text-lg font-bold">TOTAL</span>
                             <span class="text-2xl font-bold text-green-600">{{ formatMoney(cartTotal) }}</span>
@@ -339,6 +351,442 @@
                 </form>
             </div>
 
+            <!-- VIEW: MI PLATA (Contabilidad) -->
+            <div v-show="currentView === 'plata'" class="p-4 md:p-6">
+
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+                    <h2 class="text-3xl font-bold text-gray-800">Mi Plata</h2>
+                    <button @click="imprimirResumenPlata" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
+                        <i class="fa-solid fa-print mr-1"></i> Imprimir reporte
+                    </button>
+                </div>
+
+                <!-- Sub-pestañas -->
+                <div class="flex gap-2 mb-6 overflow-x-auto pb-1">
+                    <button @click="plataTab = 'resumen'" :class="plataTab === 'resumen' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
+                        <i class="fa-solid fa-chart-column mr-1"></i> Resumen
+                    </button>
+                    <button @click="plataTab = 'gastos'; cargarGastos();" :class="plataTab === 'gastos' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
+                        <i class="fa-solid fa-receipt mr-1"></i> Gastos
+                    </button>
+                    <button @click="plataTab = 'compras'; cargarCompras();" :class="plataTab === 'compras' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
+                        <i class="fa-solid fa-truck-ramp-box mr-1"></i> Compras
+                    </button>
+                    <button @click="plataTab = 'cierre'; cargarCierre();" :class="plataTab === 'cierre' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
+                        <i class="fa-solid fa-cash-register mr-1"></i> Cierre de caja
+                    </button>
+                </div>
+
+                <!-- ===================== RESUMEN ===================== -->
+                <div v-show="plataTab === 'resumen'">
+
+                    <!-- Filtro de fechas -->
+                    <div class="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Periodo</label>
+                            <select v-model="plataRango.periodo" @change="cargarPlata" class="border rounded-lg p-2">
+                                <option value="hoy">Hoy</option>
+                                <option value="semana">Esta semana</option>
+                                <option value="mes">Este mes</option>
+                                <option value="anio">Este año</option>
+                                <option value="rango">Elegir fechas…</option>
+                            </select>
+                        </div>
+                        <div v-if="plataRango.periodo === 'rango'">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Desde</label>
+                            <input type="date" v-model="plataRango.desde" @change="cargarPlata" class="border rounded-lg p-2">
+                        </div>
+                        <div v-if="plataRango.periodo === 'rango'">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Hasta</label>
+                            <input type="date" v-model="plataRango.hasta" @change="cargarPlata" class="border rounded-lg p-2">
+                        </div>
+                        <button @click="cargarPlata" class="bg-gray-800 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-900">
+                            <i class="fa-solid fa-rotate-right"></i> Actualizar
+                        </button>
+                    </div>
+
+                    <!-- Tarjetas grandes -->
+                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-blue-500">
+                            <p class="text-sm text-gray-500 font-semibold mb-1">Capital en inventario</p>
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.capital_inventario) }}</h3>
+                            <p class="text-xs text-gray-400 mt-1">Lo que hay en el estante, a precio de compra</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-green-500">
+                            <p class="text-sm text-gray-500 font-semibold mb-1">Dinero en caja hoy</p>
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.dinero_en_caja) }}</h3>
+                            <p class="text-xs text-gray-400 mt-1">Efectivo que debería haber</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500">
+                            <p class="text-sm text-gray-500 font-semibold mb-1">Plata en la calle</p>
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.plata_en_la_calle) }}</h3>
+                            <p class="text-xs text-gray-400 mt-1">Fiaos sin cobrar</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500">
+                            <p class="text-sm text-gray-500 font-semibold mb-1">Utilidad del mes</p>
+                            <h3 class="text-2xl md:text-3xl font-bold text-emerald-600">{{ formatMoney(plataResumen.utilidad_mes) }}</h3>
+                            <p class="text-xs text-gray-400 mt-1">Lo vendido menos lo que costó</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-500">
+                            <p class="text-sm text-gray-500 font-semibold mb-1">Gastos del mes</p>
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.gastos_mes) }}</h3>
+                            <p class="text-xs text-gray-400 mt-1">Fletes, arriendo, servicios…</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-purple-500">
+                            <p class="text-sm text-gray-500 font-semibold mb-1">Cuentas por pagar</p>
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.cuentas_por_pagar) }}</h3>
+                            <p class="text-xs text-gray-400 mt-1">Lo que le debemos a proveedores</p>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico simple (sin librerías, funciona sin internet) -->
+                    <div class="bg-white p-6 rounded-xl shadow mb-6">
+                        <h3 class="text-lg font-bold mb-4">Cuánto gané por día</h3>
+
+                        <div v-if="plataSerie.serie.length === 0" class="text-center text-gray-400 py-10">
+                            <i class="fa-solid fa-chart-simple text-3xl mb-2"></i>
+                            <p>Todavía no hay ventas en este periodo.</p>
+                        </div>
+
+                        <div v-else class="flex items-end gap-3 h-56 overflow-x-auto">
+                            <div v-for="p in plataSerie.serie" :key="p.periodo" class="flex flex-col items-center justify-end flex-shrink-0">
+                                <span class="text-xs font-bold text-emerald-700 mb-1">{{ formatMoneyCorto(p.utilidad) }}</span>
+                                <div class="w-10 bg-emerald-500 rounded-t hover:bg-emerald-600 transition" :style="{ height: alturaBarra(p.utilidad) }" :title="formatMoney(p.utilidad)"></div>
+                                <span class="text-[10px] text-gray-500 mt-2">{{ etiquetaPeriodo(p.periodo) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 mt-6 border-t pt-4 text-center">
+                            <div><p class="text-sm text-gray-500">Vendido</p><p class="text-xl font-bold">{{ formatMoney(plataSerie.totales.ventas) }}</p></div>
+                            <div><p class="text-sm text-gray-500">Costó</p><p class="text-xl font-bold">{{ formatMoney(plataSerie.totales.costo) }}</p></div>
+                            <div><p class="text-sm text-gray-500">Utilidad</p><p class="text-xl font-bold text-emerald-600">{{ formatMoney(plataSerie.totales.utilidad) }}</p></div>
+                        </div>
+                    </div>
+
+                    <!-- Contado vs fiao -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div v-for="t in plataTipos" :key="t.tipo_venta" class="bg-white p-5 rounded-xl shadow">
+                            <p class="text-sm font-bold text-gray-500 uppercase">{{ t.tipo_venta === 'contado' ? 'De contado' : 'Fiaos' }}</p>
+                            <p class="text-2xl font-bold mt-1">{{ formatMoney(t.ventas) }}</p>
+                            <p class="text-sm text-emerald-600 font-semibold">Utilidad: {{ formatMoney(t.utilidad) }}</p>
+                            <p class="text-xs text-gray-400">{{ t.num_ventas }} venta(s)</p>
+                        </div>
+                    </div>
+
+                    <!-- Utilidad por producto -->
+                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <div class="p-4 border-b bg-gray-50">
+                            <h3 class="text-lg font-bold">Qué me deja más plata</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-sm">
+                                        <th class="p-3">Producto</th>
+                                        <th class="p-3 text-center">Cantidad</th>
+                                        <th class="p-3 text-right">Vendido</th>
+                                        <th class="p-3 text-right">Costó</th>
+                                        <th class="p-3 text-right">Utilidad</th>
+                                        <th class="p-3 text-right">Margen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="p in plataProductos" :key="p.producto_id" class="border-b hover:bg-gray-50">
+                                        <td class="p-3 font-medium">{{ p.nombre }}</td>
+                                        <td class="p-3 text-center">{{ p.cantidad }} {{ p.unidad }}</td>
+                                        <td class="p-3 text-right">{{ formatMoney(p.ventas) }}</td>
+                                        <td class="p-3 text-right text-gray-500">{{ formatMoney(p.costo) }}</td>
+                                        <td class="p-3 text-right font-bold text-emerald-600">{{ formatMoney(p.utilidad) }}</td>
+                                        <td class="p-3 text-right font-semibold" :class="p.margen >= 15 ? 'text-emerald-600' : 'text-amber-600'">{{ p.margen }}%</td>
+                                    </tr>
+                                    <tr v-if="plataProductos.length === 0">
+                                        <td colspan="6" class="p-6 text-center text-gray-500">Sin ventas en este periodo.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================== GASTOS ===================== -->
+                <div v-show="plataTab === 'gastos'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow h-fit">
+                        <h3 class="text-lg font-bold mb-4">Registrar un gasto</h3>
+                        <form @submit.prevent="guardarGasto" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">¿En qué se fue la plata?</label>
+                                <select v-model.number="gastoForm.categoria_id" required class="w-full p-3 border rounded-lg">
+                                    <option value="" disabled>Seleccione una categoría</option>
+                                    <option v-for="c in categoriasGasto" :key="c.id" :value="c.id">{{ c.nombre }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Descripción</label>
+                                <input v-model="gastoForm.descripcion" required type="text" placeholder="Ej: flete de cianuro" class="w-full p-3 border rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Monto ($)</label>
+                                <input v-model.number="gastoForm.monto" required type="number" min="1" class="w-full p-3 border rounded-lg text-right font-bold text-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">¿Cómo se pagó?</label>
+                                <select v-model="gastoForm.metodo_pago" class="w-full p-3 border rounded-lg">
+                                    <option value="efectivo">Efectivo (sale de la caja)</option>
+                                    <option value="transferencia">Transferencia</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                                <i class="fa-solid fa-plus mr-1"></i> Guardar gasto
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow overflow-hidden">
+                        <div class="p-4 border-b bg-gray-50 flex justify-between items-center flex-wrap gap-2">
+                            <h3 class="text-lg font-bold">Gastos registrados</h3>
+                            <div class="flex items-center gap-2">
+                                <input type="date" v-model="gastosFiltro.desde" @change="cargarGastos" class="border rounded p-2 text-sm">
+                                <input type="date" v-model="gastosFiltro.hasta" @change="cargarGastos" class="border rounded p-2 text-sm">
+                                <button @click="gastosFiltro.desde=''; gastosFiltro.hasta=''; cargarGastos();" class="text-blue-600 text-sm font-semibold">Limpiar</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-sm">
+                                        <th class="p-3">Fecha</th>
+                                        <th class="p-3">Categoría</th>
+                                        <th class="p-3">Descripción</th>
+                                        <th class="p-3 text-right">Monto</th>
+                                        <th class="p-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="g in gastos" :key="g.id" class="border-b hover:bg-gray-50">
+                                        <td class="p-3 text-sm">{{ formatDate(g.fecha) }}</td>
+                                        <td class="p-3 text-sm">{{ g.categoria }}</td>
+                                        <td class="p-3">{{ g.descripcion }}</td>
+                                        <td class="p-3 text-right font-bold">{{ formatMoney(g.monto) }}</td>
+                                        <td class="p-3 text-center">
+                                            <button @click="eliminarGasto(g.id)" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="gastos.length === 0">
+                                        <td colspan="5" class="p-6 text-center text-gray-500">No hay gastos registrados.</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot v-if="gastos.length > 0">
+                                    <tr class="bg-gray-50 font-bold">
+                                        <td colspan="3" class="p-3 text-right">TOTAL</td>
+                                        <td class="p-3 text-right text-amber-700">{{ formatMoney(gastosTotal) }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================== COMPRAS ===================== -->
+                <div v-show="plataTab === 'compras'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow h-fit">
+                        <h3 class="text-lg font-bold mb-4">Entrada de mercancía</h3>
+                        <form @submit.prevent="guardarCompra" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Proveedor</label>
+                                <select v-model.number="compraForm.proveedor_id" class="w-full p-3 border rounded-lg">
+                                    <option :value="null">Sin proveedor</option>
+                                    <option v-for="p in proveedores" :key="p.id" :value="p.id">{{ p.nombre }}</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Forma de pago</label>
+                                    <select v-model="compraForm.tipo_pago" class="w-full p-3 border rounded-lg">
+                                        <option value="contado">Contado</option>
+                                        <option value="credito">A crédito</option>
+                                    </select>
+                                </div>
+                                <div v-if="compraForm.tipo_pago === 'credito'">
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Vence</label>
+                                    <input v-model="compraForm.fecha_vencimiento" type="date" class="w-full p-3 border rounded-lg">
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-4">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Agregar producto</label>
+                                <select v-model.number="compraLinea.producto_id" class="w-full p-3 border rounded-lg mb-2">
+                                    <option value="" disabled>Seleccione un producto</option>
+                                    <option v-for="p in productos" :key="p.id" :value="p.id">{{ p.nombre }}</option>
+                                </select>
+                                <div class="grid grid-cols-2 gap-3 mb-2">
+                                    <input v-model.number="compraLinea.cantidad" type="number" step="0.1" min="0.1" placeholder="Cantidad" class="w-full p-3 border rounded-lg">
+                                    <input v-model.number="compraLinea.costo_unitario" type="number" min="0" placeholder="Costo unitario" class="w-full p-3 border rounded-lg">
+                                </div>
+                                <button type="button" @click="agregarLineaCompra" class="w-full bg-gray-800 text-white py-2 rounded-lg font-semibold hover:bg-gray-900">
+                                    <i class="fa-solid fa-plus mr-1"></i> Agregar a la compra
+                                </button>
+                            </div>
+
+                            <div v-if="compraForm.detalles.length > 0" class="border-t pt-4 space-y-2">
+                                <div v-for="(l, i) in compraForm.detalles" :key="i" class="flex justify-between items-center bg-gray-50 p-3 rounded border">
+                                    <div class="text-sm">
+                                        <p class="font-semibold">{{ l.nombre }}</p>
+                                        <p class="text-gray-500">{{ l.cantidad }} x {{ formatMoney(l.costo_unitario) }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="font-bold">{{ formatMoney(l.cantidad * l.costo_unitario) }}</span>
+                                        <button type="button" @click="compraForm.detalles.splice(i, 1)" class="text-red-500"><i class="fa-solid fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between text-lg font-bold border-t pt-2">
+                                    <span>TOTAL</span>
+                                    <span>{{ formatMoney(compraTotal) }}</span>
+                                </div>
+                            </div>
+
+                            <button type="submit" :disabled="compraForm.detalles.length === 0" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50">
+                                <i class="fa-solid fa-truck-ramp-box mr-1"></i> Registrar entrada
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow overflow-hidden h-fit">
+                        <div class="p-4 border-b bg-gray-50">
+                            <h3 class="text-lg font-bold">Cuentas por pagar</h3>
+                            <p class="text-sm text-gray-500">Total que le debemos a los proveedores:
+                                <strong class="text-purple-700">{{ formatMoney(comprasPendientes.total) }}</strong>
+                            </p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 text-sm">
+                                        <th class="p-3">Proveedor</th>
+                                        <th class="p-3">Compra</th>
+                                        <th class="p-3">Vence</th>
+                                        <th class="p-3 text-right">Saldo</th>
+                                        <th class="p-3 text-center">Pagar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="c in comprasPendientes.compras" :key="c.id" class="border-b hover:bg-gray-50">
+                                        <td class="p-3 font-medium">{{ c.proveedor || 'Sin proveedor' }}</td>
+                                        <td class="p-3 text-sm">{{ formatDate(c.fecha) }}</td>
+                                        <td class="p-3 text-sm font-semibold">{{ formatDate(c.fecha_vencimiento) }}</td>
+                                        <td class="p-3 text-right font-bold">{{ formatMoney(c.saldo_pendiente) }}</td>
+                                        <td class="p-3 text-center">
+                                            <button @click="abrirPagoProveedor(c)" class="bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200" title="Registrar pago">
+                                                <i class="fa-solid fa-money-bill-wave"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="comprasPendientes.compras.length === 0">
+                                        <td colspan="5" class="p-6 text-center text-gray-500">No hay cuentas por pagar. ¡Bien ahí!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================== CIERRE DE CAJA ===================== -->
+                <div v-show="plataTab === 'cierre'" class="max-w-2xl mx-auto">
+                    <div class="bg-white p-6 rounded-xl shadow">
+                        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                            <h3 class="text-lg font-bold">Arqueo de caja</h3>
+                            <input type="date" v-model="cierreFecha" @change="cargarCierre" class="border rounded-lg p-2">
+                        </div>
+
+                        <span v-if="cierre.ya_cerrado" class="inline-block mb-4 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-semibold">
+                            <i class="fa-solid fa-lock mr-1"></i> Este día ya se cerró (volver a guardar lo actualiza)
+                        </span>
+
+                        <div class="space-y-2 text-lg">
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="text-gray-600">Efectivo inicial</span>
+                                <input v-model.number="cierre.efectivo_inicial" type="number" class="w-40 text-right border rounded-lg p-2">
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="text-gray-600">+ Ventas de contado en efectivo</span>
+                                <span class="font-semibold">{{ formatMoney(cierre.ventas_efectivo) }}</span>
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="text-gray-600">+ Abonos en efectivo</span>
+                                <span class="font-semibold">{{ formatMoney(cierre.abonos_efectivo) }}</span>
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="text-gray-600">- Gastos en efectivo</span>
+                                <span class="font-semibold text-amber-700">{{ formatMoney(cierre.gastos_efectivo) }}</span>
+                            </div>
+                            <div class="flex justify-between border-b pb-2">
+                                <span class="text-gray-600">- Pagos a proveedores en efectivo</span>
+                                <span class="font-semibold text-amber-700">{{ formatMoney(cierre.pagos_proveedor_efectivo) }}</span>
+                            </div>
+                            <div class="flex justify-between bg-blue-50 p-3 rounded-lg font-bold text-xl">
+                                <span>= Efectivo esperado</span>
+                                <span class="text-blue-800">{{ formatMoney(efectivoEsperado) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-bold text-gray-600 mb-1">¿Cuánto contó el cajero?</label>
+                            <input v-model.number="cierre.efectivo_contado" type="number" class="w-full p-4 border-2 border-blue-300 rounded-lg text-right text-2xl font-bold bg-blue-50">
+                        </div>
+
+                        <div v-if="cierre.efectivo_contado !== null && cierre.efectivo_contado !== ''" class="mt-4 p-4 rounded-lg text-center" :class="diferenciaCaja === 0 ? 'bg-emerald-100' : (diferenciaCaja < 0 ? 'bg-red-100' : 'bg-amber-100')">
+                            <p class="text-sm font-semibold text-gray-600">Diferencia</p>
+                            <p class="text-3xl font-bold" :class="diferenciaCaja === 0 ? 'text-emerald-700' : (diferenciaCaja < 0 ? 'text-red-700' : 'text-amber-700')">
+                                {{ formatMoney(diferenciaCaja) }}
+                            </p>
+                            <p class="font-semibold mt-1" :class="diferenciaCaja === 0 ? 'text-emerald-700' : (diferenciaCaja < 0 ? 'text-red-700' : 'text-amber-700')">
+                                {{ diferenciaCaja === 0 ? '¡Cuadró perfecto!' : (diferenciaCaja < 0 ? 'Faltó plata en la caja' : 'Sobró plata en la caja') }}
+                            </p>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="block text-sm font-bold text-gray-600 mb-1">Observación (opcional)</label>
+                            <input v-model="cierre.observacion" type="text" placeholder="Ej: faltante por vueltos" class="w-full p-3 border rounded-lg">
+                        </div>
+
+                        <div class="flex gap-3 mt-6">
+                            <button @click="guardarCierre" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                                <i class="fa-solid fa-lock mr-1"></i> Guardar cierre
+                            </button>
+                            <button @click="imprimirCierre" class="flex-1 bg-gray-800 text-white py-3 rounded-lg font-bold hover:bg-gray-900">
+                                <i class="fa-solid fa-print mr-1"></i> Imprimir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- MODAL: PAGO A PROVEEDOR -->
+            <div v-if="pagoProveedorModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+                    <h3 class="text-xl font-bold mb-4">Pagar al proveedor</h3>
+                    <p class="text-sm text-gray-600 mb-1">Proveedor: <strong>{{ pagoProveedorModal.data.proveedor || 'Sin proveedor' }}</strong></p>
+                    <p class="text-sm text-gray-600 mb-4">Saldo: <strong class="text-purple-700">{{ formatMoney(pagoProveedorModal.data.saldo_pendiente) }}</strong></p>
+
+                    <label class="block text-sm font-bold mb-1">Monto a pagar ($)</label>
+                    <input type="number" v-model.number="pagoProveedorModal.monto" :max="pagoProveedorModal.data.saldo_pendiente" class="w-full p-3 border rounded text-xl text-right font-bold bg-green-50 mb-3">
+
+                    <label class="block text-sm font-bold mb-1">¿Cómo se pagó?</label>
+                    <select v-model="pagoProveedorModal.metodo_pago" class="w-full p-3 border rounded mb-4">
+                        <option value="efectivo">Efectivo (sale de la caja)</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="otro">Otro</option>
+                    </select>
+
+                    <div class="flex space-x-3">
+                        <button @click="pagoProveedorModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
+                        <button @click="procesarPagoProveedor" :disabled="pagoProveedorModal.monto <= 0 || pagoProveedorModal.monto > pagoProveedorModal.data.saldo_pendiente" class="flex-1 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 disabled:opacity-50">Pagar</button>
+                    </div>
+                </div>
+            </div>
+
         </main>
 
         <!-- MODAL: ABONO -->
@@ -366,6 +814,7 @@
                 <h3 class="text-xl font-bold mb-4">{{ productModal.isEdit ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
                 <form @submit.prevent="saveProduct" class="space-y-3">
                     <div><label class="block text-xs font-bold">Nombre</label><input v-model="productModal.data.nombre" required type="text" class="w-full p-2 border rounded"></div>
+                    <div><label class="block text-xs font-bold">Descripción (¿para qué sirve?)</label><textarea v-model="productModal.data.descripcion" rows="2" placeholder="Ej: reactivo de alta pureza para beneficio de oro" class="w-full p-2 border rounded text-sm"></textarea></div>
                     <div><label class="block text-xs font-bold">Unidad (ej. Kg, Und, Galón)</label><input v-model="productModal.data.unidad" required type="text" class="w-full p-2 border rounded"></div>
                     
                     <div class="grid grid-cols-2 gap-3">

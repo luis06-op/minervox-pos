@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------
+# MINERVOX · Archivos que NO se suben al repositorio
+# ---------------------------------------------------------------
+
+# Datos locales del negocio: catalogo real con precios de compra y
+# de venta, respaldos y pruebas. El repositorio de GitHub es PUBLICO,
+# asi que todo esto se queda unicamente en este computador.
+local/
+
+# Respaldos de la base de datos
+*.sql.bak
+*.sql.gz
+backups/
+
+# Basura del sistema operativo
+Thumbs.db
+Desktop.ini
+desktop.ini
+.DS_Store
+
+# Basura del editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Registros
+*.log
