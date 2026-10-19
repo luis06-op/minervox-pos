@@ -17,6 +17,12 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
 require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: leer la configuración lo hace cualquiera que haya entrado (el
+// recibo la necesita, igual que el pagaré). Cambiarla es solo del dueño:
+// ahí viven los plazos, la mora y el nombre del negocio.
+$usuario = minervox_exigir_sesion($pdo);
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -32,6 +38,10 @@ try {
 
     if ($metodo !== 'PUT') {
         minervox_error(405, 'Método no permitido');
+    }
+
+    if (!$usuario['es_admin']) {
+        minervox_error(403, 'Solo el administrador puede cambiar la configuración');
     }
 
     $datos   = minervox_leer_json();

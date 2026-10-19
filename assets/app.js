@@ -11,11 +11,260 @@ const app = createApp({
             plazo_1: 8, plazo_2: 15, recargo_credito: 0, texto_pagare: ''
         });
 
+        // =================================================================
+        // SESIÓN Y PERMISOS (Fase 5)
+        //
+        // El sistema arranca en la pantalla de entrada. Hasta que no haya
+        // alguien adentro NO se carga nada: ni catálogo, ni cartera, ni
+        // configuración.
+        //
+        // Ojo con una idea equivocada: esconder un botón en la pantalla NO
+        // es seguridad. Si el cajero abre la consola del navegador y llama
+        // `cartera.php` a mano, el servidor igual le responde. Por eso cada
+        // endpoint exige la sesión (y el rol) del lado del servidor; esto de
+        // aquí es solo para que la pantalla muestre lo que corresponde.
+        // =================================================================
+        const sesion = ref({
+            cargando: true,              // todavía no sabemos quién entró
+            autenticado: false,
+            necesita_primer_admin: false, // la base no tiene ningún usuario
+            usuario: null,
+        });
+
+        /** ¿El que está adentro es el dueño? */
+        const esAdmin = computed(() => sesion.value.usuario?.es_admin === true);
+
+        const loginForm       = ref({ usuario: '', clave: '' });
+        const primerAdminForm = ref({ nombre: '', usuario: '', clave: '', clave2: '' });
+        const claveForm       = ref({ show: false, actual: '', nueva: '', nueva2: '' });
+        const sesionError     = ref('');
+
         // Toast
         const toast = ref({ show: false, message: '', type: 'success' });
+        /**
+         * Aviso emergente. Se calla los errores cuando no hay sesión: si el
+         * servidor contestó 401 la pantalla ya muestra el login, y llenarla
+         * de "Error cargando…" solo confunde.
+         */
         const showToast = (message, type = 'success') => {
+            if (type === 'error' && !sesion.value.autenticado) return;
             toast.value = { show: true, message, type };
             setTimeout(() => { toast.value.show = false; }, 3000);
+        };
+
+        /**
+         * Envoltorio de `fetch`. Hace tres cosas que, repetidas 29 veces a
+         * mano, se terminan olvidando en alguna:
+         *   · manda la cookie de la sesión,
+         *   · si el servidor responde 401 (se venció la sesión, o alguien
+         *     la cerró), devuelve al usuario a la pantalla de entrada,
+         *   · si responde 403, avisa que esa acción no es suya.
+         *
+         * El último parámetro es para el login: ahí un 401 significa "clave
+         * equivocada", no "sesión vencida", y hay que mostrar el mensaje.
+         */
+        const api = async (url, opciones = {}, manejarSesion = true) => {
+            const res = await fetch(url, { credentials: 'same-origin', ...opciones });
+
+            if (manejarSesion && res.status === 401) {
+                cerrarLocal();
+                throw new Error('sesion-vencida');
+            }
+            if (manejarSesion && res.status === 403) {
+                let mensaje = 'Esa acción no es suya';
+                try { mensaje = (await res.clone().json()).error || mensaje; } catch (e) { /* da igual */ }
+                showToast(mensaje, 'error');
+                throw new Error('sin-permiso');
+            }
+            return res;
+        };
+
+        /** Deja la pantalla en el login, sin llamar al servidor. */
+        const cerrarLocal = () => {
+            sesion.value = { cargando: false, autenticado: false, necesita_primer_admin: false, usuario: null };
+            currentView.value = 'pos';
+            Object.assign(claveForm.value, { show: false, actual: '', nueva: '', nueva2: '' });
+        };
+
+        /** Pregunta al servidor quién está adentro. */
+        const cargarSesion = async () => {
+            try {
+                const res  = await api(`${API_BASE}sesion.php?action=estado`);
+                const data = await res.json();
+                sesion.value = {
+                    cargando: false,
+                    autenticado: !!data.autenticado,
+                    necesita_primer_admin: !!data.necesita_primer_admin,
+                    usuario: data.usuario || null,
+                };
+            } catch (e) {
+                sesion.value = { cargando: false, autenticado: false, necesita_primer_admin: false, usuario: null };
+                sesionError.value = 'No se pudo conectar con el servidor. ¿Está encendido XAMPP?';
+            }
+        };
+
+        /** Trae todo lo que la pantalla necesita una vez hay sesión. */
+        const cargarDatosIniciales = async () => {
+            currentView.value = 'pos';
+            plataTab.value = 'resumen';
+            await loadConfig();
+            await loadProductos();
+            await loadClientes();
+            cargarCartera();
+        };
+
+        /** Entrar con usuario y clave. */
+        const entrar = async () => {
+            sesionError.value = '';
+            try {
+                const res  = await api(`${API_BASE}sesion.php?action=entrar`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(loginForm.value),
+                }, false);
+                const data = await res.json();
+
+                if (!data.success) {
+                    sesionError.value = data.error || 'No se pudo entrar';
+                    return;
+                }
+
+                sesion.value = { cargando: false, autenticado: true, necesita_primer_admin: false, usuario: data.usuario };
+                loginForm.value = { usuario: '', clave: '' };
+                await cargarDatosIniciales();
+            } catch (e) {
+                sesionError.value = 'No se pudo conectar con el servidor';
+            }
+        };
+
+        /** La primera vez: crear el administrador del negocio. */
+        const crearPrimerAdmin = async () => {
+            sesionError.value = '';
+            try {
+                const res  = await api(`${API_BASE}sesion.php?action=primer_admin`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(primerAdminForm.value),
+                }, false);
+                const data = await res.json();
+
+                if (!data.success) {
+                    sesionError.value = data.error || 'No se pudo crear el administrador';
+                    return;
+                }
+
+                sesion.value = { cargando: false, autenticado: true, necesita_primer_admin: false, usuario: data.usuario };
+                primerAdminForm.value = { nombre: '', usuario: '', clave: '', clave2: '' };
+                await cargarDatosIniciales();
+                showToast('Administrador creado. ¡Bienvenido!');
+            } catch (e) {
+                sesionError.value = 'No se pudo conectar con el servidor';
+            }
+        };
+
+        /** Salir del sistema. */
+        const salir = async () => {
+            try {
+                await api(`${API_BASE}sesion.php?action=salir`, { method: 'POST' });
+            } catch (e) { /* si falla, igual se cierra la pantalla */ }
+            cerrarLocal();
+        };
+
+        /** Cambiar mi propia contraseña. */
+        const cambiarMiClave = async () => {
+            try {
+                const res  = await api(`${API_BASE}sesion.php?action=cambiar_clave`, {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        clave_actual: claveForm.value.actual,
+                        clave_nueva:  claveForm.value.nueva,
+                        clave_nueva2: claveForm.value.nueva2,
+                    }),
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    showToast(data.error || 'No se pudo cambiar la contraseña', 'error');
+                    return;
+                }
+
+                Object.assign(claveForm.value, { show: false, actual: '', nueva: '', nueva2: '' });
+                showToast('Contraseña cambiada');
+            } catch (e) { /* api() ya avisó */ }
+        };
+
+        // -----------------------------------------------------------------
+        // USUARIOS (Fase 5) — solo el administrador
+        // -----------------------------------------------------------------
+        const usuarios = ref([]);
+        const usuarioModal = ref({
+            show: false,
+            isEdit: false,
+            data: { id: null, nombre: '', usuario: '', rol: 'cajero', activo: 1, clave: '', clave2: '' },
+        });
+
+        const cargarUsuarios = async () => {
+            try {
+                const res = await api(`${API_BASE}usuarios.php`);
+                usuarios.value = await res.json();
+            } catch (e) { /* api() ya avisó */ }
+        };
+
+        const openUsuarioModal = (u = null) => {
+            usuarioModal.value = u
+                ? { show: true, isEdit: true, data: { id: u.id, nombre: u.nombre, usuario: u.usuario, rol: u.rol, activo: Number(u.activo), clave: '', clave2: '' } }
+                : { show: true, isEdit: false, data: { id: null, nombre: '', usuario: '', rol: 'cajero', activo: 1, clave: '', clave2: '' } };
+        };
+
+        const guardarUsuario = async () => {
+            const d = usuarioModal.value.data;
+            const cuerpo = { nombre: d.nombre, usuario: d.usuario, rol: d.rol, activo: d.activo };
+            if (d.clave) {
+                cuerpo.clave  = d.clave;
+                cuerpo.clave2 = d.clave2;
+            }
+            if (usuarioModal.value.isEdit) cuerpo.id = d.id;
+
+            try {
+                const res = await api(`${API_BASE}usuarios.php`, {
+                    method:  usuarioModal.value.isEdit ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(cuerpo),
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    showToast(data.error || 'No se pudo guardar el usuario', 'error');
+                    return;
+                }
+
+                usuarioModal.value.show = false;
+                showToast(usuarioModal.value.isEdit ? 'Usuario actualizado' : 'Usuario creado');
+                cargarUsuarios();
+            } catch (e) { /* api() ya avisó */ }
+        };
+
+        /** Desactivar en vez de borrar: el historial lo necesita. */
+        const desactivarUsuario = async (u) => {
+            if (!confirm(`¿Desactivar a ${u.nombre}? No podrá entrar, pero su historial queda intacto.`)) return;
+
+            try {
+                const res = await api(`${API_BASE}usuarios.php`, {
+                    method:  'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ id: u.id, nombre: u.nombre, usuario: u.usuario, rol: u.rol, activo: 0 }),
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    showToast(data.error || 'No se pudo desactivar', 'error');
+                    return;
+                }
+
+                showToast('Usuario desactivado');
+                cargarUsuarios();
+            } catch (e) { /* api() ya avisó */ }
         };
 
         // Data
@@ -25,30 +274,32 @@ const app = createApp({
         // Load Initial Data
         const loadConfig = async () => {
             try {
-                const res = await fetch(`${API_BASE}configuracion.php`);
+                const res = await api(`${API_BASE}configuracion.php`);
                 config.value = await res.json();
             } catch (e) { showToast('Error cargando configuración', 'error'); }
         };
 
         const loadProductos = async () => {
             try {
-                const res = await fetch(`${API_BASE}productos.php`);
+                const res = await api(`${API_BASE}productos.php`);
                 productos.value = await res.json();
             } catch (e) { showToast('Error cargando productos', 'error'); }
         };
 
         const loadClientes = async () => {
             try {
-                const res = await fetch(`${API_BASE}clientes.php`);
+                const res = await api(`${API_BASE}clientes.php`);
                 clientes.value = await res.json();
             } catch (e) { showToast('Error cargando clientes', 'error'); }
         };
 
+        // Al abrir: primero se pregunta al servidor quién está adentro. Solo
+        // si hay sesión se cargan los datos (si no, todo daría 401).
         onMounted(async () => {
-            await loadConfig();
-            await loadProductos();
-            await loadClientes();
-            cargarCartera();
+            await cargarSesion();
+            if (sesion.value.autenticado) {
+                await cargarDatosIniciales();
+            }
         });
 
         // --- POS Logic ---
@@ -71,7 +322,7 @@ const app = createApp({
             }
             buscandoCliente.value = true;
             try {
-                const res = await fetch(`${API_BASE}clientes.php?cedula=${clienteForm.value.cedula}`);
+                const res = await api(`${API_BASE}clientes.php?cedula=${clienteForm.value.cedula}`);
                 const data = await res.json();
                 if (data.success && data.cliente) {
                     clienteForm.value = {
@@ -162,7 +413,7 @@ const app = createApp({
             };
 
             try {
-                const res = await fetch(`${API_BASE}ventas.php`, {
+                const res = await api(`${API_BASE}ventas.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -219,7 +470,7 @@ const app = createApp({
         const saveProduct = async () => {
             const method = productModal.value.isEdit ? 'PUT' : 'POST';
             try {
-                const res = await fetch(`${API_BASE}productos.php`, {
+                const res = await api(`${API_BASE}productos.php`, {
                     method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(productModal.value.data)
@@ -238,7 +489,7 @@ const app = createApp({
         const deleteProduct = async (id) => {
             if(!confirm('¿Seguro que desea eliminar este producto?')) return;
             try {
-                const res = await fetch(`${API_BASE}productos.php?id=${id}`, { method: 'DELETE' });
+                const res = await api(`${API_BASE}productos.php?id=${id}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (data.success) {
                     showToast('Producto eliminado');
@@ -275,7 +526,7 @@ const app = createApp({
 
         const cargarResumenCartera = async () => {
             try {
-                const res = await fetch(`${API_BASE}cartera.php?action=resumen`);
+                const res = await api(`${API_BASE}cartera.php?action=resumen`);
                 carteraResumen.value = await res.json();
             } catch(e) { showToast('No se pudo cargar la cartera', 'error'); }
         };
@@ -284,7 +535,7 @@ const app = createApp({
             try {
                 const params = new URLSearchParams({ action: 'list', filtro: filtroCartera.value });
                 if (buscarCartera.value.trim()) params.set('q', buscarCartera.value.trim());
-                const res = await fetch(`${API_BASE}cartera.php?${params.toString()}`);
+                const res = await api(`${API_BASE}cartera.php?${params.toString()}`);
                 deudoresActivos.value = await res.json();
             } catch(e) { showToast('Error cargando cartera', 'error'); }
         };
@@ -319,7 +570,7 @@ const app = createApp({
 
         const procesarAbono = async () => {
             try {
-                const res = await fetch(`${API_BASE}cartera.php`, {
+                const res = await api(`${API_BASE}cartera.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -359,7 +610,7 @@ const app = createApp({
 
         const procesarAcuerdo = async () => {
             try {
-                const res = await fetch(`${API_BASE}cartera.php?action=acuerdo`, {
+                const res = await api(`${API_BASE}cartera.php?action=acuerdo`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -382,7 +633,7 @@ const app = createApp({
 
         const abrirEstadoCuenta = async (credito) => {
             try {
-                const res = await fetch(`${API_BASE}cartera.php?action=estado_cuenta&credito_id=${credito.credito_id}`);
+                const res = await api(`${API_BASE}cartera.php?action=estado_cuenta&credito_id=${credito.credito_id}`);
                 estadoCuentaModal.value = { show: true, data: await res.json() };
             } catch(e) { showToast('No se pudo abrir el estado de cuenta', 'error'); }
         };
@@ -433,7 +684,7 @@ const app = createApp({
         // --- Config Logic ---
         const saveConfig = async () => {
             try {
-                const res = await fetch(`${API_BASE}configuracion.php`, {
+                const res = await api(`${API_BASE}configuracion.php`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config.value)
@@ -487,7 +738,23 @@ const app = createApp({
         /** Qué agrupación tiene sentido: por año conviene ver meses. */
         const agrupacion = () => (plataRango.value.periodo === 'anio' ? 'mes' : 'dia');
 
+        /**
+         * Abre "Mi Plata". Al cajero solo le corresponde el cierre de caja:
+         * la utilidad, el capital y los gastos son del dueño.
+         */
+        const abrirPlata = () => {
+            if (!esAdmin.value) plataTab.value = 'cierre';
+            currentView.value = 'plata';
+            cargarPlata();
+        };
+
         const cargarPlata = async () => {
+            if (!esAdmin.value) {
+                // El cajero entra directo al cierre: lo demás le daría 403.
+                plataTab.value = 'cierre';
+                await cargarCierre();
+                return;
+            }
             await Promise.all([
                 cargarResumenPlata(),
                 cargarSerieUtilidad(),
@@ -498,21 +765,21 @@ const app = createApp({
 
         const cargarResumenPlata = async () => {
             try {
-                const res = await fetch(`${API_BASE}contabilidad.php?action=resumen`);
+                const res = await api(`${API_BASE}contabilidad.php?action=resumen`);
                 plataResumen.value = await res.json();
             } catch(e) { showToast('No se pudo cargar el resumen de plata', 'error'); }
         };
 
         const cargarSerieUtilidad = async () => {
             try {
-                const res = await fetch(`${API_BASE}contabilidad.php?action=utilidad&agrupar=${agrupacion()}&${rangoQuery()}`);
+                const res = await api(`${API_BASE}contabilidad.php?action=utilidad&agrupar=${agrupacion()}&${rangoQuery()}`);
                 plataSerie.value = await res.json();
             } catch(e) { showToast('No se pudo cargar la utilidad', 'error'); }
         };
 
         const cargarUtilidadProductos = async () => {
             try {
-                const res = await fetch(`${API_BASE}contabilidad.php?action=utilidad_productos&${rangoQuery()}`);
+                const res = await api(`${API_BASE}contabilidad.php?action=utilidad_productos&${rangoQuery()}`);
                 const data = await res.json();
                 plataProductos.value = data.productos || [];
             } catch(e) { showToast('No se pudo cargar la utilidad por producto', 'error'); }
@@ -520,7 +787,7 @@ const app = createApp({
 
         const cargarUtilidadTipos = async () => {
             try {
-                const res = await fetch(`${API_BASE}contabilidad.php?action=utilidad_tipo&${rangoQuery()}`);
+                const res = await api(`${API_BASE}contabilidad.php?action=utilidad_tipo&${rangoQuery()}`);
                 const data = await res.json();
                 plataTipos.value = data.tipos || [];
             } catch(e) { /* silencioso: es un detalle del tablero */ }
@@ -529,7 +796,7 @@ const app = createApp({
         // --- Gastos ---
         const cargarCategoriasGasto = async () => {
             try {
-                const res = await fetch(`${API_BASE}gastos.php?action=categorias`);
+                const res = await api(`${API_BASE}gastos.php?action=categorias`);
                 categoriasGasto.value = await res.json();
             } catch(e) { /* silencioso */ }
         };
@@ -540,7 +807,7 @@ const app = createApp({
                 const params = new URLSearchParams({ action: 'list' });
                 if (gastosFiltro.value.desde) params.set('desde', gastosFiltro.value.desde);
                 if (gastosFiltro.value.hasta) params.set('hasta', gastosFiltro.value.hasta);
-                const res = await fetch(`${API_BASE}gastos.php?${params.toString()}`);
+                const res = await api(`${API_BASE}gastos.php?${params.toString()}`);
                 const data = await res.json();
                 gastos.value = data.gastos || [];
                 gastosTotal.value = data.total || 0;
@@ -549,7 +816,7 @@ const app = createApp({
 
         const guardarGasto = async () => {
             try {
-                const res = await fetch(`${API_BASE}gastos.php`, {
+                const res = await api(`${API_BASE}gastos.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(gastoForm.value)
@@ -569,7 +836,7 @@ const app = createApp({
         const eliminarGasto = async (id) => {
             if (!confirm('¿Seguro que quiere borrar este gasto?')) return;
             try {
-                const res = await fetch(`${API_BASE}gastos.php?id=${id}`, { method: 'DELETE' });
+                const res = await api(`${API_BASE}gastos.php?id=${id}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (data.success) {
                     showToast('Gasto eliminado');
@@ -588,14 +855,14 @@ const app = createApp({
 
         const cargarProveedores = async () => {
             try {
-                const res = await fetch(`${API_BASE}proveedores.php`);
+                const res = await api(`${API_BASE}proveedores.php`);
                 proveedores.value = await res.json();
             } catch(e) { /* silencioso */ }
         };
 
         const cargarComprasPendientes = async () => {
             try {
-                const res = await fetch(`${API_BASE}compras.php?action=pendientes`);
+                const res = await api(`${API_BASE}compras.php?action=pendientes`);
                 comprasPendientes.value = await res.json();
             } catch(e) { showToast('No se pudieron cargar las cuentas por pagar', 'error'); }
         };
@@ -621,7 +888,7 @@ const app = createApp({
 
         const guardarCompra = async () => {
             try {
-                const res = await fetch(`${API_BASE}compras.php`, {
+                const res = await api(`${API_BASE}compras.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(compraForm.value)
@@ -650,7 +917,7 @@ const app = createApp({
 
         const procesarPagoProveedor = async () => {
             try {
-                const res = await fetch(`${API_BASE}compras.php?action=pago`, {
+                const res = await api(`${API_BASE}compras.php?action=pago`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -674,7 +941,7 @@ const app = createApp({
         // --- Cierre de caja ---
         const cargarCierre = async () => {
             try {
-                const res = await fetch(`${API_BASE}cierres_caja.php?action=calcular&fecha=${cierreFecha.value}`);
+                const res = await api(`${API_BASE}cierres_caja.php?action=calcular&fecha=${cierreFecha.value}`);
                 const data = await res.json();
                 if (data.efectivo_contado === null) data.efectivo_contado = null;
                 cierre.value = data;
@@ -701,7 +968,7 @@ const app = createApp({
 
         const guardarCierre = async () => {
             try {
-                const res = await fetch(`${API_BASE}cierres_caja.php`, {
+                const res = await api(`${API_BASE}cierres_caja.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -799,6 +1066,10 @@ const app = createApp({
 
         return {
             currentView, API_BASE, config, toast, productos, clientes, lowStockProducts,
+            // Sesión y usuarios (Fase 5)
+            sesion, esAdmin, loginForm, primerAdminForm, claveForm, sesionError,
+            entrar, salir, crearPrimerAdmin, cambiarMiClave, abrirPlata,
+            usuarios, usuarioModal, cargarUsuarios, openUsuarioModal, guardarUsuario, desactivarUsuario,
             cart, tipoVenta, metodoPago, clienteForm, buscandoCliente, buscarCliente, abonoInicial, diasPlazoCredito, isMobileCartOpen, processingVenta,
             toggleTipoVenta, addToCart, removeFromCart, cartTotal, fechaVencimiento, procesarVenta,
             productModal, openProductModal, saveProduct, deleteProduct,

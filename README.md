@@ -128,10 +128,18 @@ Abre `phpMyAdmin` (`http://localhost/phpmyadmin`) y crea una base de datos nueva
 
 1. `database.sql` — crea el esquema base (las 7 tablas originales).
 2. `migracion_minervox_v2.sql` — agrega contabilidad, usuarios y trazabilidad.
+3. `migracion_minervox_v3.sql` — descripción de productos e índices.
+4. `migracion_minervox_v4.sql` — cartera: tasa de mora por crédito y acuerdos de pago.
+5. `migracion_minervox_v5.sql` — usuarios: último acceso y bloqueo por intentos fallidos.
 
 > ⚠️ **Nunca** importes un archivo que empiece con `DROP DATABASE`: borraría los datos reales del negocio.
 
-**4️⃣ Accede a la aplicación** desde el navegador:
+**4️⃣ Crea el administrador.** La primera vez que abras la aplicación te va a pedir crear el
+usuario del dueño (nombre, usuario y contraseña). No viene ninguna clave por defecto: el
+repositorio es público y una clave escrita aquí sería una puerta abierta. De ahí en adelante,
+el dueño crea los cajeros desde **Usuarios** y cada uno entra con su propia clave.
+
+**5️⃣ Accede a la aplicación** desde el navegador:
 ```
 http://localhost/minervox-pos/
 ```
@@ -147,7 +155,10 @@ minervox-pos/
 ├── 📁 api/              # Endpoints PHP (PDO)
 ├── 📁 assets/           # CSS, JS, íconos, imágenes
 ├── 📄 database.sql      # Esquema base (las 7 tablas originales)
-├── 📄 migracion_minervox_v2.sql  # Migración v2: contabilidad, usuarios, kardex
+├── 📄 migracion_minervox_v2.sql  # Contabilidad, usuarios, kardex
+├── 📄 migracion_minervox_v3.sql  # Descripción de productos e índices
+├── 📄 migracion_minervox_v4.sql  # Cartera: mora por crédito y acuerdos
+├── 📄 migracion_minervox_v5.sql  # Usuarios: control de entrada
 ├── 📄 index.html        # Punto de entrada PWA
 └── 📄 README.md
 ```
@@ -159,10 +170,13 @@ minervox-pos/
 - [x] Módulo de facturación (Contado/Crédito)
 - [x] Generador de pagarés en PDF
 - [x] Buscador de clientes por Cédula/NIT
-- [ ] Dashboard de reportes y estadísticas de ventas
+- [x] Dashboard de reportes y estadísticas de ventas ("Mi Plata")
+- [x] Cartera con semáforo, mora y acuerdos de pago
+- [x] Roles y permisos multiusuario
+- [ ] Sustancias controladas: exigir cédula al vender
+- [ ] Anulación de ventas
 - [ ] Notificaciones automáticas por WhatsApp API
 - [ ] Modo offline completo (Service Workers)
-- [ ] Roles y permisos multiusuario
 
 ---
 

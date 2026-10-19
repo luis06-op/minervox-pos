@@ -13,6 +13,10 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
 require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: los gastos son plata que sale del negocio. Solo el administrador.
+$usuario = minervox_exigir_admin($pdo);
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -106,16 +110,16 @@ try {
 
         if ($fecha) {
             $stmt = $pdo->prepare(
-                'INSERT INTO gastos (categoria_id, descripcion, monto, metodo_pago, fecha)
-                 VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO gastos (categoria_id, descripcion, monto, metodo_pago, fecha, usuario_id)
+                 VALUES (?, ?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$categoria_id, $descripcion, $monto, $metodo_pago, $fecha . ' 00:00:00']);
+            $stmt->execute([$categoria_id, $descripcion, $monto, $metodo_pago, $fecha . ' 00:00:00', $usuario['id']]);
         } else {
             $stmt = $pdo->prepare(
-                'INSERT INTO gastos (categoria_id, descripcion, monto, metodo_pago)
-                 VALUES (?, ?, ?, ?)'
+                'INSERT INTO gastos (categoria_id, descripcion, monto, metodo_pago, usuario_id)
+                 VALUES (?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$categoria_id, $descripcion, $monto, $metodo_pago]);
+            $stmt->execute([$categoria_id, $descripcion, $monto, $metodo_pago, $usuario['id']]);
         }
 
         echo json_encode([

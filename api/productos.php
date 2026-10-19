@@ -16,6 +16,12 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
 require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: el inventario lo ve cualquiera que haya entrado, pero el precio
+// de COSTO (lo que le cuesta al negocio) se le esconde al cajero, y crear,
+// cambiar o borrar productos es solo del administrador.
+$usuario = minervox_exigir_sesion($pdo);
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -52,9 +58,22 @@ function producto_desde_datos(array $datos): array
 try {
     if ($metodo === 'GET') {
         $stmt = $pdo->query('SELECT * FROM productos ORDER BY nombre');
-        echo json_encode($stmt->fetchAll(), JSON_UNESCAPED_UNICODE);
+        $filas = $stmt->fetchAll();
+
+        // El cajero no necesita saber cuánto costó la mercancía.
+        if (!$usuario['es_admin']) {
+            foreach (array_keys($filas) as $i) {
+                unset($filas[$i]['precio_costo']);
+            }
+        }
+
+        echo json_encode($filas, JSON_UNESCAPED_UNICODE);
 
     } elseif ($metodo === 'POST') {
+        if (!$usuario['es_admin']) {
+            minervox_error(403, 'Solo el administrador puede crear productos');
+        }
+
         $p = producto_desde_datos(minervox_leer_json());
 
         $stmt = $pdo->prepare(
@@ -70,6 +89,10 @@ try {
         echo json_encode(['success' => true, 'id' => (int) $pdo->lastInsertId()], JSON_UNESCAPED_UNICODE);
 
     } elseif ($metodo === 'PUT') {
+        if (!$usuario['es_admin']) {
+            minervox_error(403, 'Solo el administrador puede modificar productos');
+        }
+
         $datos = minervox_leer_json();
         $id = (int) ($datos['id'] ?? 0);
         if ($id <= 0) {
@@ -95,6 +118,10 @@ try {
         echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
 
     } elseif ($metodo === 'DELETE') {
+        if (!$usuario['es_admin']) {
+            minervox_error(403, 'Solo el administrador puede borrar productos');
+        }
+
         $id = (int) ($_GET['id'] ?? 0);
         if ($id <= 0) {
             minervox_error(400, 'Falta el producto a eliminar');

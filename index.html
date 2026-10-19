@@ -16,8 +16,81 @@
     <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
-    <div id="app" class="w-full h-full flex flex-col md:flex-row">
-        
+    <div id="app" class="w-full h-full">
+
+        <!-- ================== PANTALLA DE ENTRADA (FASE 5) ================== -->
+        <!-- Mientras el sistema no sepa quién entró, no muestra nada más.    -->
+
+        <!-- 1. Abriendo: se está preguntando al servidor quién está adentro -->
+        <div v-if="sesion.cargando" class="w-full h-full flex flex-col items-center justify-center bg-blue-900 text-white">
+            <i class="fa-solid fa-spinner fa-spin text-4xl mb-4"></i>
+            <p class="text-lg font-semibold">Abriendo MINERVOX…</p>
+        </div>
+
+        <!-- 2. Nadie adentro: entrar, o crear el administrador la primera vez -->
+        <div v-else-if="!sesion.autenticado" class="w-full h-full flex items-center justify-center bg-blue-900 p-4 overflow-y-auto">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 my-auto">
+                <div class="text-center mb-6">
+                    <h1 class="text-3xl font-bold text-blue-800 tracking-wider">MINERVOX</h1>
+                    <p class="text-sm text-gray-500 mt-1">Gestión &amp; Suministros Mineros</p>
+                </div>
+
+                <!-- 2a. La base no tiene ningún usuario: se crea el dueño -->
+                <form v-if="sesion.necesita_primer_admin" @submit.prevent="crearPrimerAdmin" class="space-y-4">
+                    <h2 class="text-xl font-bold text-gray-800">Crear el administrador</h2>
+                    <p class="text-sm text-gray-500">
+                        Es la primera vez que se abre el sistema. Cree aquí el usuario del dueño.
+                        Después usted mismo crea los cajeros desde <strong>Usuarios</strong>.
+                    </p>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1">Nombre y apellido</label>
+                        <input v-model="primerAdminForm.nombre" required type="text" placeholder="Ej: Luis Ángel Muñoz" class="w-full p-3 border rounded-lg text-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1">Usuario para entrar</label>
+                        <input v-model="primerAdminForm.usuario" required type="text" placeholder="Ej: luis" class="w-full p-3 border rounded-lg text-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1">Contraseña</label>
+                        <input v-model="primerAdminForm.clave" required type="password" class="w-full p-3 border rounded-lg text-lg">
+                        <p class="text-xs text-gray-400 mt-1">Mínimo 8 caracteres. Apúntela bien: no se puede recuperar.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1">Repetir la contraseña</label>
+                        <input v-model="primerAdminForm.clave2" required type="password" class="w-full p-3 border rounded-lg text-lg">
+                    </div>
+                    <p v-if="sesionError" class="text-red-700 text-sm bg-red-50 p-3 rounded-lg">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ sesionError }}
+                    </p>
+                    <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 shadow">
+                        <i class="fa-solid fa-user-shield mr-2"></i> Crear y entrar
+                    </button>
+                </form>
+
+                <!-- 2b. Entrar normalmente -->
+                <form v-else @submit.prevent="entrar" class="space-y-4">
+                    <h2 class="text-xl font-bold text-gray-800">Entrar</h2>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1">Usuario</label>
+                        <input v-model="loginForm.usuario" required autofocus type="text" class="w-full p-3 border rounded-lg text-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1">Contraseña</label>
+                        <input v-model="loginForm.clave" required type="password" class="w-full p-3 border rounded-lg text-lg">
+                    </div>
+                    <p v-if="sesionError" class="text-red-700 text-sm bg-red-50 p-3 rounded-lg">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ sesionError }}
+                    </p>
+                    <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 shadow">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Entrar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 3. Ya hay sesión: el sistema de siempre -->
+        <div v-else class="w-full h-full flex flex-col md:flex-row">
+
         <!-- Sidebar Navigation -->
         <nav class="bg-blue-900 text-white w-full md:w-20 lg:w-64 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-start py-4 md:px-4 md:py-6 shadow-xl z-20">
             <!-- El título solo se muestra cuando el menú ya es ancho (lg).
@@ -35,17 +108,46 @@
                 <i class="fa-solid fa-wallet text-xl lg:mr-3"></i>
                 <span class="hidden lg:inline font-semibold">Cartera</span>
             </button>
-            <button @click="currentView = 'plata'; cargarPlata();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'plata'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
-                <i class="fa-solid fa-sack-dollar text-xl lg:mr-3"></i>
-                <span class="hidden lg:inline font-semibold">Mi Plata</span>
+            <!-- Mi Plata: el dueño ve todo el negocio. Al cajero solo le toca
+                 el cierre de caja, así que el botón cambia de nombre. -->
+            <button @click="abrirPlata()" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'plata'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
+                <i v-if="esAdmin" class="fa-solid fa-sack-dollar text-xl lg:mr-3"></i>
+                <i v-else class="fa-solid fa-cash-register text-xl lg:mr-3"></i>
+                <span class="hidden lg:inline font-semibold">{{ esAdmin ? 'Mi Plata' : 'Cierre de caja' }}</span>
             </button>
             <button @click="currentView = 'inventario'; loadProductos();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'inventario'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
                 <i class="fa-solid fa-boxes-stacked text-xl lg:mr-3"></i>
                 <span class="hidden lg:inline font-semibold">Inventario</span>
             </button>
-            <button @click="currentView = 'config'; loadConfig();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'config'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none">
+
+            <!-- Solo el administrador: usuarios y ajustes -->
+            <button v-if="esAdmin" @click="currentView = 'usuarios'; cargarUsuarios();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'usuarios'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
+                <i class="fa-solid fa-users text-xl lg:mr-3"></i>
+                <span class="hidden lg:inline font-semibold">Usuarios</span>
+            </button>
+            <button v-if="esAdmin" @click="currentView = 'config'; loadConfig();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'config'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none">
                 <i class="fa-solid fa-gear text-xl lg:mr-3"></i>
                 <span class="hidden lg:inline font-semibold">Ajustes</span>
+            </button>
+
+            <!-- Quién está adentro (solo donde el menú es ancho) -->
+            <div class="hidden lg:block mt-auto pt-4 border-t border-blue-800 w-full">
+                <p class="text-sm font-bold text-blue-200 truncate" :title="sesion.usuario ? sesion.usuario.nombre : ''">{{ sesion.usuario ? sesion.usuario.nombre : '' }}</p>
+                <p class="text-xs text-blue-400 mb-2">
+                    <i class="fa-solid fa-circle text-[8px] mr-1" :class="esAdmin ? 'text-amber-400' : 'text-emerald-400'"></i>
+                    {{ esAdmin ? 'Administrador' : 'Cajero' }}
+                </p>
+                <button @click="claveForm.show = true" class="text-xs text-blue-300 hover:text-white block mb-1">
+                    <i class="fa-solid fa-key mr-1"></i> Cambiar mi contraseña
+                </button>
+                <button @click="salir()" class="text-xs text-blue-300 hover:text-white">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i> Salir
+                </button>
+            </div>
+
+            <!-- En el celular el menú es solo iconos: salir aparte -->
+            <button @click="salir()" class="lg:hidden py-2 px-3 hover:bg-blue-800 rounded-lg" title="Salir">
+                <i class="fa-solid fa-right-from-bracket text-xl"></i>
             </button>
         </nav>
 
@@ -315,7 +417,7 @@
             <div v-show="currentView === 'inventario'" class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-3xl font-bold text-gray-800">Inventario</h2>
-                    <button @click="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+                    <button v-if="esAdmin" @click="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
                         <i class="fa-solid fa-plus mr-1"></i> Nuevo Producto
                     </button>
                 </div>
@@ -326,18 +428,18 @@
                             <tr class="bg-gray-100 text-gray-600 text-sm">
                                 <th class="p-3">Nombre</th>
                                 <th class="p-3">Unidad</th>
-                                <th class="p-3 text-right">P. Costo</th>
+                                <th v-if="esAdmin" class="p-3 text-right">P. Costo</th>
                                 <th class="p-3 text-right">P. Contado</th>
                                 <th class="p-3 text-right">P. Crédito</th>
                                 <th class="p-3 text-center">Stock</th>
-                                <th class="p-3 text-center">Acciones</th>
+                                <th v-if="esAdmin" class="p-3 text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="p in productos" :key="p.id" class="border-b hover:bg-gray-50">
                                 <td class="p-3 font-medium">{{ p.nombre }}</td>
                                 <td class="p-3 text-sm text-gray-500">{{ p.unidad }}</td>
-                                <td class="p-3 text-right">{{ formatMoney(p.precio_costo) }}</td>
+                                <td v-if="esAdmin" class="p-3 text-right">{{ formatMoney(p.precio_costo) }}</td>
                                 <td class="p-3 text-right text-blue-600 font-bold">{{ formatMoney(p.precio_contado) }}</td>
                                 <td class="p-3 text-right text-purple-600 font-bold">{{ formatMoney(p.precio_credito) }}</td>
                                 <td class="p-3 text-center">
@@ -345,7 +447,7 @@
                                         {{ p.stock }}
                                     </span>
                                 </td>
-                                <td class="p-3 text-center space-x-2">
+                                <td v-if="esAdmin" class="p-3 text-center space-x-2">
                                     <button @click="openProductModal(p)" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
                                     <button @click="deleteProduct(p.id)" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
                                 </td>
@@ -353,6 +455,65 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- VIEW: USUARIOS (FASE 5 · solo el administrador) -->
+            <div v-show="currentView === 'usuarios'" class="p-6">
+                <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">Usuarios</h2>
+                        <p class="text-sm text-gray-500">Quién puede entrar al sistema y qué puede hacer.</p>
+                    </div>
+                    <button @click="openUsuarioModal()" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
+                        <i class="fa-solid fa-user-plus mr-1"></i> Nuevo usuario
+                    </button>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-4 rounded mb-6 text-sm space-y-1">
+                    <p><strong>Administrador:</strong> ve todo (Mi Plata, costos, gastos, compras, ajustes) y maneja los usuarios.</p>
+                    <p><strong>Cajero:</strong> vende, cobra cartera, registra clientes, consulta el inventario (sin costos) y cierra la caja.</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow overflow-hidden overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-max">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-sm">
+                                <th class="p-3">Nombre</th>
+                                <th class="p-3">Usuario</th>
+                                <th class="p-3">Rol</th>
+                                <th class="p-3 text-center">Estado</th>
+                                <th class="p-3 text-center">Última entrada</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="u in usuarios" :key="u.id" class="border-b hover:bg-gray-50">
+                                <td class="p-3 font-medium">{{ u.nombre }}</td>
+                                <td class="p-3 text-gray-500">{{ u.usuario }}</td>
+                                <td class="p-3">
+                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="u.rol === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'">
+                                        {{ u.rol === 'admin' ? 'Administrador' : 'Cajero' }}
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center">
+                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="Number(u.activo) === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'">
+                                        {{ Number(u.activo) === 1 ? 'Activo' : 'Desactivado' }}
+                                    </span>
+                                </td>
+                                <td class="p-3 text-center text-sm text-gray-500">{{ u.ultimo_acceso ? formatDate(u.ultimo_acceso) : 'nunca' }}</td>
+                                <td class="p-3 text-center space-x-2">
+                                    <button @click="openUsuarioModal(u)" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button v-if="Number(u.activo) === 1" @click="desactivarUsuario(u)" class="text-red-500 hover:text-red-700" title="Desactivar"><i class="fa-solid fa-user-slash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="text-xs text-gray-500 mt-4">
+                    Un usuario que se va no se borra: se <strong>desactiva</strong>. Así las ventas, abonos y cierres
+                    que hizo conservan su nombre y el arqueo de esos días se entiende.
+                </p>
             </div>
 
             <!-- VIEW: CONFIG -->
@@ -417,14 +578,14 @@
             <div v-show="currentView === 'plata'" class="p-4 md:p-6">
 
                 <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-                    <h2 class="text-3xl font-bold text-gray-800">Mi Plata</h2>
-                    <button @click="imprimirResumenPlata" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
+                    <h2 class="text-3xl font-bold text-gray-800">{{ esAdmin ? 'Mi Plata' : 'Cierre de caja' }}</h2>
+                    <button v-if="esAdmin" @click="imprimirResumenPlata" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
                         <i class="fa-solid fa-print mr-1"></i> Imprimir reporte
                     </button>
                 </div>
 
-                <!-- Sub-pestañas -->
-                <div class="flex gap-2 mb-6 overflow-x-auto pb-1">
+                <!-- Sub-pestañas (solo el dueño: el cajero entra directo al cierre) -->
+                <div v-if="esAdmin" class="flex gap-2 mb-6 overflow-x-auto pb-1">
                     <button @click="plataTab = 'resumen'" :class="plataTab === 'resumen' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
                         <i class="fa-solid fa-chart-column mr-1"></i> Resumen
                     </button>
@@ -850,6 +1011,7 @@
             </div>
 
         </main>
+        </div>
 
         <!-- MODAL: ABONO -->
         <div v-if="abonoModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -1005,6 +1167,73 @@
                     <div class="flex space-x-3 mt-4 pt-4 border-t">
                         <button type="button" @click="productModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
                         <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: USUARIO (FASE 5) -->
+        <div v-if="usuarioModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold mb-4">{{ usuarioModal.isEdit ? 'Editar usuario' : 'Nuevo usuario' }}</h3>
+                <form @submit.prevent="guardarUsuario" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold">Nombre y apellido</label>
+                        <input v-model="usuarioModal.data.nombre" required type="text" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold">Usuario para entrar</label>
+                        <input v-model="usuarioModal.data.usuario" required type="text" class="w-full p-2 border rounded">
+                        <p class="text-xs text-gray-400">Letras, números, punto, guion y guion bajo.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold">Rol</label>
+                        <select v-model="usuarioModal.data.rol" class="w-full p-2 border rounded">
+                            <option value="cajero">Cajero (vende y cobra)</option>
+                            <option value="admin">Administrador (ve todo)</option>
+                        </select>
+                    </div>
+                    <label class="flex items-center gap-2 text-sm bg-gray-50 p-3 rounded border">
+                        <input type="checkbox" v-model="usuarioModal.data.activo" :true-value="1" :false-value="0" class="w-5 h-5">
+                        <span>Puede entrar al sistema</span>
+                    </label>
+                    <div class="border-t pt-3 space-y-2">
+                        <label class="block text-xs font-bold">
+                            {{ usuarioModal.isEdit ? 'Nueva contraseña (déjela vacía para no cambiarla)' : 'Contraseña' }}
+                        </label>
+                        <input v-model="usuarioModal.data.clave" :required="!usuarioModal.isEdit" type="password" class="w-full p-2 border rounded">
+                        <input v-model="usuarioModal.data.clave2" :required="!usuarioModal.isEdit" type="password" placeholder="Repetir la contraseña" class="w-full p-2 border rounded">
+                        <p class="text-xs text-gray-400">Mínimo 8 caracteres.</p>
+                    </div>
+                    <div class="flex space-x-3 mt-4 pt-4 border-t">
+                        <button type="button" @click="usuarioModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
+                        <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: CAMBIAR MI CONTRASEÑA (FASE 5) -->
+        <div v-if="claveForm.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold mb-4">Cambiar mi contraseña</h3>
+                <form @submit.prevent="cambiarMiClave" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold">Contraseña actual</label>
+                        <input v-model="claveForm.actual" required type="password" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold">Nueva contraseña</label>
+                        <input v-model="claveForm.nueva" required type="password" class="w-full p-2 border rounded">
+                        <p class="text-xs text-gray-400">Mínimo 8 caracteres.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold">Repetir la nueva</label>
+                        <input v-model="claveForm.nueva2" required type="password" class="w-full p-2 border rounded">
+                    </div>
+                    <div class="flex space-x-3 mt-4 pt-4 border-t">
+                        <button type="button" @click="claveForm.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
+                        <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Cambiar</button>
                     </div>
                 </form>
             </div>

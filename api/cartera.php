@@ -26,6 +26,11 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
 require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: la cartera es plata del negocio. Solo la consulta y la mueve
+// quien haya entrado al sistema; cada abono y acuerdo queda con su nombre.
+$usuario = minervox_exigir_sesion($pdo);
 
 /**
  * Lee los parámetros de cartera que el dueño configura en Ajustes.
@@ -342,14 +347,15 @@ try {
         }
 
         $pdo->prepare(
-            'INSERT INTO acuerdos_pago (credito_id, fecha_antes, fecha_nueva, monto_pactado, observacion)
-             VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO acuerdos_pago (credito_id, fecha_antes, fecha_nueva, monto_pactado, observacion, usuario_id)
+             VALUES (?, ?, ?, ?, ?, ?)'
         )->execute([
             $creditoId,
             $credito['fecha_vencimiento'],
             $fechaNueva,
             $montoPactado,
             $observacion !== '' ? $observacion : null,
+            $usuario['id'],
         ]);
 
         $pdo->prepare('UPDATE cartera_creditos SET fecha_vencimiento = ? WHERE id = ?')
@@ -411,8 +417,8 @@ try {
         $nuevoSaldo  = max(0, round($saldo - $monto, 2));
         $moraCobrada = max(0, round($monto - $saldo, 2));
 
-        $pdo->prepare('INSERT INTO abonos (credito_id, monto, metodo_pago) VALUES (?, ?, ?)')
-            ->execute([$creditoId, $monto, $metodoPago]);
+        $pdo->prepare('INSERT INTO abonos (credito_id, monto, metodo_pago, usuario_id) VALUES (?, ?, ?, ?)')
+            ->execute([$creditoId, $monto, $metodoPago, $usuario['id']]);
 
         $pdo->prepare('UPDATE cartera_creditos SET saldo_pendiente = ?, estado = ? WHERE id = ?')
             ->execute([$nuevoSaldo, $nuevoSaldo <= 0 ? 'pagado' : 'activo', $creditoId]);

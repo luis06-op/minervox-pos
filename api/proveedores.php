@@ -13,6 +13,10 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
 require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: proveedores y sus compras son información del administrador.
+$usuario = minervox_exigir_admin($pdo);
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 

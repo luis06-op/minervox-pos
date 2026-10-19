@@ -17,6 +17,11 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
 require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: comprar y pagar a proveedores mueve el costo del inventario y la
+// plata del negocio. Es cosa del administrador, no del cajero.
+$usuario = minervox_exigir_admin($pdo);
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $accion = $_GET['action'] ?? '';
@@ -133,8 +138,8 @@ try {
             throw new InvalidArgumentException('El pago es mayor que el saldo que se debe');
         }
 
-        $pdo->prepare('INSERT INTO pagos_proveedores (compra_id, monto, metodo_pago) VALUES (?, ?, ?)')
-            ->execute([$compra_id, $monto, $metodo_pago]);
+        $pdo->prepare('INSERT INTO pagos_proveedores (compra_id, monto, metodo_pago, usuario_id) VALUES (?, ?, ?, ?)')
+            ->execute([$compra_id, $monto, $metodo_pago, $usuario['id']]);
 
         $pdo->prepare('UPDATE compras SET saldo_pendiente = ?, estado = ? WHERE id = ?')
             ->execute([$saldo, $saldo <= 0 ? 'pagada' : 'pendiente', $compra_id]);
@@ -220,8 +225,8 @@ try {
         // Cabecera
         $saldo = $tipo_pago === 'credito' ? $total : 0.0;
         $pdo->prepare(
-            'INSERT INTO compras (proveedor_id, total, tipo_pago, saldo_pendiente, fecha_vencimiento, estado, nota)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO compras (proveedor_id, total, tipo_pago, saldo_pendiente, fecha_vencimiento, estado, nota, usuario_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         )->execute([
             $proveedor_id,
             $total,
@@ -230,6 +235,7 @@ try {
             $fecha_vencimiento,
             $saldo > 0 ? 'pendiente' : 'pagada',
             $nota !== '' ? $nota : null,
+            $usuario['id'],
         ]);
         $compra_id = (int) $pdo->lastInsertId();
 
@@ -240,8 +246,8 @@ try {
         );
         $stmtStock = $pdo->prepare('UPDATE productos SET stock = stock + ?, precio_costo = ? WHERE id = ?');
         $stmtMov   = $pdo->prepare(
-            'INSERT INTO movimientos_stock (producto_id, tipo, cantidad, stock_resultante, referencia_id, nota)
-             VALUES (?, ?, ?, ?, ?, ?)'
+            'INSERT INTO movimientos_stock (producto_id, tipo, cantidad, stock_resultante, referencia_id, nota, usuario_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
 
         foreach ($lineas as $l) {
@@ -254,6 +260,7 @@ try {
                 round($l['stock_actual'] + $l['cantidad'], 2),
                 $compra_id,
                 'Entrada por compra',
+                $usuario['id'],
             ]);
         }
 

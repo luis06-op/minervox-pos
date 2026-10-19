@@ -1,6 +1,11 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
+require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: los datos de los clientes no se entregan sin haber entrado.
+$usuario = minervox_exigir_sesion($pdo);
 
 $method = $_SERVER['REQUEST_METHOD'];
 

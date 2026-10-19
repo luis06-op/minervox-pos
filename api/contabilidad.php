@@ -18,6 +18,11 @@
  */
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
+require_once 'auth.php';
+
+// FASE 5: "Mi Plata" muestra la utilidad, el capital y los costos del
+// negocio. Es información del dueño, no del mostrador.
+minervox_exigir_admin($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);

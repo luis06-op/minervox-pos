@@ -20,6 +20,8 @@
  */
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
+require_once 'utilidades.php';
+require_once 'auth.php';
 
 $METODOS_PAGO = ['efectivo', 'transferencia', 'otro'];
 $TIPOS_VENTA  = ['contado', 'credito'];
@@ -37,6 +39,10 @@ function responder_error(int $codigo, string $mensaje): void
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     responder_error(405, 'Método no permitido');
 }
+
+// FASE 5: solo vende quien haya entrado al sistema, y la venta queda con
+// el nombre de quien la hizo (para poder reclamar después).
+$usuario = minervox_exigir_sesion($pdo);
 
 $data = json_decode(file_get_contents('php://input'), true);
 if (!is_array($data)) {
@@ -189,8 +195,8 @@ try {
     // -----------------------------------------------------------
     // 4. Cabecera de la venta
     // -----------------------------------------------------------
-    $pdo->prepare('INSERT INTO ventas (tipo_venta, total, cliente_id, metodo_pago) VALUES (?, ?, ?, ?)')
-        ->execute([$tipo_venta, $total, $cliente_id, $metodo_pago]);
+    $pdo->prepare('INSERT INTO ventas (tipo_venta, total, cliente_id, metodo_pago, usuario_id) VALUES (?, ?, ?, ?, ?)')
+        ->execute([$tipo_venta, $total, $cliente_id, $metodo_pago, $usuario['id']]);
 
     $venta_id = (int) $pdo->lastInsertId();
 
@@ -203,8 +209,8 @@ try {
     );
     $stmtStock = $pdo->prepare('UPDATE productos SET stock = stock - ? WHERE id = ?');
     $stmtMov   = $pdo->prepare(
-        'INSERT INTO movimientos_stock (producto_id, tipo, cantidad, stock_resultante, referencia_id, nota)
-         VALUES (?, ?, ?, ?, ?, ?)'
+        'INSERT INTO movimientos_stock (producto_id, tipo, cantidad, stock_resultante, referencia_id, nota, usuario_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
 
     foreach ($lineas as $l) {
@@ -228,6 +234,7 @@ try {
             $stock_resultante,
             $venta_id,
             'Venta ' . $tipo_venta,
+            $usuario['id'],
         ]);
 
         // Aviso (no bloquea la venta): el mostrador a veces vende con el
@@ -256,25 +263,31 @@ try {
         $credito_id = (int) $pdo->lastInsertId();
 
         if ($abono_inicial > 0) {
-            $pdo->prepare('INSERT INTO abonos (credito_id, monto, metodo_pago) VALUES (?, ?, ?)')
-                ->execute([$credito_id, $abono_inicial, $metodo_pago]);
+            $pdo->prepare('INSERT INTO abonos (credito_id, monto, metodo_pago, usuario_id) VALUES (?, ?, ?, ?)')
+                ->execute([$credito_id, $abono_inicial, $metodo_pago, $usuario['id']]);
         }
     }
 
     $pdo->commit();
 
-    $utilidad = 0.0;
-    foreach ($lineas as $l) {
-        $utilidad += $l['subtotal'] - ($l['cantidad'] * $l['costo_unitario']);
-    }
-
-    echo json_encode([
+    $respuesta = [
         'success'      => true,
         'venta_id'     => $venta_id,
         'total'        => $total,
-        'utilidad'     => round($utilidad, 2),
         'advertencias' => $advertencias,
-    ], JSON_UNESCAPED_UNICODE);
+    ];
+
+    // FASE 5: cuánto se ganó en la venta es información del dueño; al cajero
+    // no se le manda.
+    if ($usuario['es_admin']) {
+        $utilidad = 0.0;
+        foreach ($lineas as $l) {
+            $utilidad += $l['subtotal'] - ($l['cantidad'] * $l['costo_unitario']);
+        }
+        $respuesta['utilidad'] = round($utilidad, 2);
+    }
+
+    echo json_encode($respuesta, JSON_UNESCAPED_UNICODE);
 
 } catch (InvalidArgumentException $e) {
     // Error de datos: se puede mostrar al usuario tal cual.

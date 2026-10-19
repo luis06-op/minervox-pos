@@ -21,6 +21,10 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once 'db.php';
 require_once 'utilidades.php';
+require_once 'auth.php';
+
+// FASE 5: el cajero cierra la caja, y el cierre queda a su nombre.
+$usuario = minervox_exigir_sesion($pdo);
 
 /** Suma los movimientos en efectivo de un día concreto. */
 function arqueo_del_dia(PDO $pdo, string $fecha): array
@@ -194,23 +198,22 @@ try {
 
         if ($existente) {
             // Volver a hacer el arqueo del mismo día lo actualiza, no lo duplica.
-            $parametros[] = (int) $existente['id'];
             $pdo->prepare(
                 'UPDATE cierres_caja
                     SET efectivo_inicial = ?, ventas_efectivo = ?, abonos_efectivo = ?,
                         gastos_efectivo = ?, pagos_proveedor_efectivo = ?, efectivo_esperado = ?,
                         efectivo_contado = ?, diferencia = ?, observacion = ?,
-                        creado_en = CURRENT_TIMESTAMP
+                        usuario_id = ?, creado_en = CURRENT_TIMESTAMP
                   WHERE id = ?'
-            )->execute($parametros);
+            )->execute(array_merge($parametros, [$usuario['id'], (int) $existente['id']]));
             $cierre_id = (int) $existente['id'];
         } else {
             $pdo->prepare(
                 'INSERT INTO cierres_caja
                    (fecha, efectivo_inicial, ventas_efectivo, abonos_efectivo, gastos_efectivo,
-                    pagos_proveedor_efectivo, efectivo_esperado, efectivo_contado, diferencia, observacion)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            )->execute(array_merge([$fecha], $parametros));
+                    pagos_proveedor_efectivo, efectivo_esperado, efectivo_contado, diferencia, observacion, usuario_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            )->execute(array_merge([$fecha], $parametros, [$usuario['id']]));
             $cierre_id = (int) $pdo->lastInsertId();
         }
 
