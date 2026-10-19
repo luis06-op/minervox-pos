@@ -40,7 +40,7 @@
 
     <!-- columna izquierda -->
     <text x="220" y="88" font-size="19" font-weight="700" fill="#f1f5f9">Generar pagaré</text>
-    <text x="220" y="116" font-size="12" fill="#94a3b8">Se arma con los datos del crédito y queda listo para imprimir o enviar.</text>
+    <text x="220" y="116" font-size="12" fill="#94a3b8">Se arma con los datos del crédito.</text>
 
     <g>
       <rect x="220" y="136" width="16" height="16" rx="4" fill="#1d4ed8" stroke="#38bdf8"/>
