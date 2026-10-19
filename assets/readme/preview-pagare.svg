@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" role="img" aria-label="Vista previa de la generación del pagaré en PDF">
+  <defs>
+    <linearGradient id="cardBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0b1530"/>
+    </linearGradient>
+    <clipPath id="frame"><rect x="0" y="0" width="1000" height="560" rx="16" ry="16"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+    <rect x="0" y="0" width="1000" height="560" fill="url(#cardBg)"/>
+
+    <!-- barra superior -->
+    <rect x="0" y="0" width="1000" height="46" fill="#111c33"/>
+    <circle cx="26" cy="23" r="6.5" fill="#ef4444"/>
+    <circle cx="48" cy="23" r="6.5" fill="#eab308"/>
+    <circle cx="70" cy="23" r="6.5" fill="#22c55e"/>
+    <text x="96" y="28" font-size="14" fill="#94a3b8">MINERVOX — Vale de crédito</text>
+    <text x="976" y="28" font-size="13" fill="#64748b" text-anchor="end">Cliente con deuda activa</text>
+
+    <!-- menú lateral -->
+    <rect x="0" y="46" width="196" height="514" fill="#0b1530"/>
+    <rect x="26" y="76" width="14" height="14" rx="3" fill="#334155"/>
+    <text x="50" y="89" font-size="14" fill="#94a3b8">Ventas</text>
+
+    <rect x="14" y="110" width="168" height="38" rx="9" fill="#1d4ed8"/>
+    <rect x="0" y="110" width="4" height="38" fill="#38bdf8">
+      <animate attributeName="opacity" values="1;0.35;1" dur="2.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="26" y="122" width="14" height="14" rx="3" fill="#bfdbfe"/>
+    <text x="50" y="135" font-size="14" fill="#ffffff">Cartera</text>
+
+    <rect x="26" y="168" width="14" height="14" rx="3" fill="#334155"/>
+    <text x="50" y="181" font-size="14" fill="#94a3b8">Mi Plata</text>
+
+    <rect x="26" y="214" width="14" height="14" rx="3" fill="#334155"/>
+    <text x="50" y="227" font-size="14" fill="#94a3b8">Inventario</text>
+
+    <text x="26" y="534" font-size="11" fill="#475569">El Bagre · UTC-5</text>
+
+    <!-- columna izquierda -->
+    <text x="220" y="88" font-size="19" font-weight="700" fill="#f1f5f9">Generar pagaré</text>
+    <text x="220" y="116" font-size="12" fill="#94a3b8">Se arma con los datos del crédito y queda listo para imprimir o enviar.</text>
+
+    <g>
+      <rect x="220" y="136" width="16" height="16" rx="4" fill="#1d4ed8" stroke="#38bdf8"/>
+      <path d="M 224 144 l 3 3 l 6 -7" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="246" y="149" font-size="13" fill="#cbd5e1">Cédula y datos del cliente</text>
+    </g>
+    <g>
+      <rect x="220" y="170" width="16" height="16" rx="4" fill="#1d4ed8" stroke="#38bdf8"/>
+      <path d="M 224 178 l 3 3 l 6 -7" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="246" y="183" font-size="13" fill="#cbd5e1">Plazo otorgado: 15 días</text>
+    </g>
+    <g>
+      <rect x="220" y="204" width="16" height="16" rx="4" fill="#1d4ed8" stroke="#38bdf8"/>
+      <path d="M 224 212 l 3 3 l 6 -7" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="246" y="217" font-size="13" fill="#cbd5e1">Tasa de mora configurada</text>
+    </g>
+
+    <!-- progreso de exportación -->
+    <rect x="220" y="248" width="300" height="132" rx="12" fill="#111c33" stroke="#1e293b"/>
+    <text x="240" y="278" font-size="13" font-weight="700" fill="#e2e8f0">Exportando a PDF…</text>
+    <rect x="240" y="292" width="260" height="10" rx="5" fill="#1e293b"/>
+    <rect x="240" y="292" width="0" height="10" rx="5" fill="#22c55e">
+      <animate attributeName="width" from="0" to="260" dur="2.2s" begin="0.4s" fill="freeze"/>
+    </rect>
+    <text x="240" y="326" font-size="11" fill="#64748b">html2pdf.js · A4 · recibo y pagaré</text>
+    <g transform="translate(240 348)">
+      <path d="M 0 4 l 7 8 l 16 -18" stroke="#22c55e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="36" stroke-dashoffset="36">
+        <animate attributeName="stroke-dashoffset" from="36" to="0" dur="0.5s" begin="2.5s" fill="freeze"/>
+      </path>
+      <text x="34" y="10" font-size="13" fill="#4ade80">PDF generado</text>
+      <animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="2.5s" fill="freeze"/>
+    </g>
+
+    <!-- envío por whatsapp -->
+    <rect x="220" y="398" width="300" height="92" rx="12" fill="#111c33" stroke="#1e293b"/>
+    <rect x="240" y="420" width="126" height="34" rx="17" fill="#22c55e" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="3s" fill="freeze"/>
+      <animate attributeName="width" from="60" to="126" dur="0.5s" begin="3s" fill="freeze"/>
+    </rect>
+    <text x="303" y="442" font-size="13" font-weight="700" fill="#052e16" text-anchor="middle" opacity="0">
+      Enviar por WhatsApp
+      <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="3.1s" fill="freeze"/>
+    </text>
+    <text x="240" y="474" font-size="11" fill="#64748b">wa.me con el resumen del cobro</text>
+
+    <!-- documento -->
+    <rect x="560" y="80" width="400" height="420" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+    <rect x="560" y="80" width="400" height="6" rx="3" fill="#1d4ed8"/>
+
+    <text x="584" y="124" font-size="17" font-weight="800" fill="#0f172a">VALE DE CRÉDITO</text>
+    <text x="936" y="124" font-size="11" fill="#64748b" text-anchor="end">N.° 000148</text>
+    <line x1="584" y1="136" x2="936" y2="136" stroke="#e2e8f0" stroke-width="2"/>
+
+    <text x="584" y="162" font-size="10" letter-spacing="1" fill="#94a3b8">CLIENTE</text>
+    <rect x="584" y="170" width="210" height="11" rx="5" fill="#cbd5e1" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="0.35s" begin="0.3s" fill="freeze"/>
+    </rect>
+
+    <text x="584" y="204" font-size="10" letter-spacing="1" fill="#94a3b8">CÉDULA / N.I.T.</text>
+    <rect x="584" y="212" width="150" height="11" rx="5" fill="#cbd5e1" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="0.35s" begin="0.5s" fill="freeze"/>
+    </rect>
+
+    <rect x="584" y="244" width="352" height="9" rx="4" fill="#e2e8f0" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="0.35s" begin="0.7s" fill="freeze"/>
+    </rect>
+    <rect x="584" y="264" width="330" height="9" rx="4" fill="#e2e8f0" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="0.35s" begin="0.85s" fill="freeze"/>
+    </rect>
+    <rect x="584" y="284" width="352" height="9" rx="4" fill="#e2e8f0" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="0.35s" begin="1s" fill="freeze"/>
+    </rect>
+    <rect x="584" y="304" width="240" height="9" rx="4" fill="#e2e8f0" opacity="0">
+      <animate attributeName="opacity" from="0" to="1" dur="0.35s" begin="1.15s" fill="freeze"/>
+    </rect>
+
+    <line x1="584" y1="336" x2="936" y2="336" stroke="#e2e8f0" stroke-width="2"/>
+    <text x="584" y="364" font-size="14" font-weight="800" fill="#0f172a">TOTAL A PAGAR</text>
+    <text x="936" y="366" font-size="22" font-weight="800" fill="#15803d" text-anchor="end">$ 164.600</text>
+
+    <text x="584" y="392" font-size="11" fill="#64748b">Plazo: 15 días · vence: 30/10/2026</text>
+
+    <line x1="584" y1="446" x2="740" y2="446" stroke="#94a3b8"/>
+    <text x="584" y="464" font-size="10" fill="#94a3b8">Firma del cliente</text>
+
+    <!-- sello -->
+    <g transform="translate(872 430)">
+      <g>
+        <animateTransform attributeName="transform" type="scale" values="0.3;1.14;1" dur="0.6s" begin="1.6s" fill="freeze"/>
+        <animate attributeName="opacity" from="0" to="0.92" dur="0.6s" begin="1.6s" fill="freeze"/>
+        <circle cx="0" cy="0" r="44" fill="none" stroke="#15803d" stroke-width="3"/>
+        <circle cx="0" cy="0" r="37" fill="none" stroke="#15803d" stroke-width="1"/>
+        <text x="0" y="-4" font-size="10" font-weight="800" letter-spacing="1.5" fill="#15803d" text-anchor="middle">MINERVOX</text>
+        <text x="0" y="12" font-size="9" letter-spacing="1" fill="#15803d" text-anchor="middle">EL BAGRE</text>
+        <text x="0" y="26" font-size="8" fill="#15803d" text-anchor="middle">SELLADO</text>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="MINERVOX - Sistema POS e Inventario para suministros mineros">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1020"/>
+      <stop offset="45%" stop-color="#111c33"/>
+      <stop offset="100%" stop-color="#070d1a"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#dbeafe"/>
+      <stop offset="100%" stop-color="#7dd3fc"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="gemTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="gemBottom" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+    </pattern>
+    <clipPath id="frame">
+      <rect x="0" y="0" width="1200" height="320" rx="18" ry="18"/>
+    </clipPath>
+    <clipPath id="titleClip">
+      <text x="300" y="176" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="86" font-weight="800" letter-spacing="7">MINERVOX</text>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect x="0" y="0" width="1200" height="320" fill="url(#bg)"/>
+    <rect x="0" y="0" width="1200" height="320" fill="url(#grid)" opacity="0.35"/>
+
+    <circle cx="150" cy="80" r="110" fill="#0ea5e9" opacity="0.14">
+      <animate attributeName="opacity" values="0.10;0.26;0.10" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="100;138;100" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1090" cy="255" r="130" fill="#2563eb" opacity="0.16">
+      <animate attributeName="opacity" values="0.20;0.07;0.20" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="142;110;142" dur="6s" repeatCount="indefinite"/>
+    </circle>
+
+    <g transform="rotate(12 600 160)" opacity="0.75">
+      <rect x="-300" y="-240" width="200" height="820" fill="url(#beam)">
+        <animateTransform attributeName="transform" type="translate" from="-400 0" to="2000 0" dur="7s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0; 0 -10; 0 0" dur="4.5s" repeatCount="indefinite"/>
+      <polygon points="140,86 206,128 180,216 100,216 74,128" fill="url(#gemTop)"/>
+      <polygon points="140,86 206,128 140,134 74,128" fill="#38bdf8"/>
+      <polygon points="140,134 180,216 100,216" fill="url(#gemBottom)"/>
+      <path d="M 74 128 L 140 134 L 206 128" fill="none" stroke="#e0f2fe" stroke-width="2" opacity="0.7"/>
+      <path d="M 140 86 L 140 134" fill="none" stroke="#e0f2fe" stroke-width="2" opacity="0.55"/>
+      <path d="M 140 134 L 140 216" fill="none" stroke="#93c5fd" stroke-width="1.5" opacity="0.45"/>
+      <circle cx="140" cy="156" r="76" fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.6">
+        <animate attributeName="r" values="72;114" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.7;0" dur="3s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+
+    <g>
+      <animate attributeName="opacity" from="0" to="1" dur="0.9s" begin="0.2s" fill="freeze"/>
+
+      <text x="300" y="116" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="7" fill="#38bdf8">GESTIÓN &amp; SUMINISTROS MINEROS</text>
+
+      <text x="300" y="176" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="86" font-weight="800" letter-spacing="7" fill="url(#titleGrad)">MINERVOX</text>
+
+      <g clip-path="url(#titleClip)">
+        <rect x="-280" y="60" width="180" height="170" fill="url(#shine)">
+          <animateTransform attributeName="transform" type="translate" from="-280 0" to="1320 0" dur="4.5s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+
+      <text x="302" y="216" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="21" letter-spacing="2.4" fill="#94a3b8">POS · Inventario · Cartera · Pagarés en PDF</text>
+
+      <g font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="14" font-weight="600" letter-spacing="1.4">
+        <g opacity="0">
+          <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.7s" fill="freeze"/>
+          <rect x="300" y="246" width="168" height="34" rx="17" fill="#0f2a4a" stroke="#38bdf8" stroke-opacity="0.5"/>
+          <text x="384" y="268" fill="#7dd3fc" text-anchor="middle">MOBILE-FIRST</text>
+        </g>
+        <g opacity="0">
+          <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.95s" fill="freeze"/>
+          <rect x="480" y="246" width="176" height="34" rx="17" fill="#0f2a4a" stroke="#38bdf8" stroke-opacity="0.5"/>
+          <text x="568" y="268" fill="#7dd3fc" text-anchor="middle">MULTIUSUARIO</text>
+        </g>
+        <g opacity="0">
+          <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.2s" fill="freeze"/>
+          <rect x="668" y="246" width="234" height="34" rx="17" fill="#0f2a4a" stroke="#38bdf8" stroke-opacity="0.5"/>
+          <text x="785" y="268" fill="#7dd3fc" text-anchor="middle">17 TABLAS · 5 MIGRACIONES</text>
+        </g>
+      </g>
+    </g>
+
+    <line x1="40" y1="303" x2="1160" y2="303" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="14 10">
+      <animate attributeName="stroke-dashoffset" from="0" to="48" dur="1.4s" repeatCount="indefinite"/>
+    </line>
+  </g>
+</svg>
