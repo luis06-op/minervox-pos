@@ -48,7 +48,7 @@ const app = createApp({
             await loadConfig();
             await loadProductos();
             await loadClientes();
-            loadCarteraDashboard();
+            cargarCartera();
         });
 
         // --- POS Logic ---
@@ -186,7 +186,7 @@ const app = createApp({
                     metodoPago.value = 'efectivo';
                     isMobileCartOpen.value = false;
                     loadProductos(); // update stock
-                    loadCarteraDashboard(); // update dashboard
+                    cargarResumenCartera(); // refresca el semáforo de cartera
                     loadClientes(); // Reload clients globally
                 } else {
                     showToast(data.error || 'Error procesando venta', 'error');
@@ -211,7 +211,7 @@ const app = createApp({
             } else {
                 productModal.value = { 
                     show: true, isEdit: false, 
-                    data: { nombre: '', descripcion: '', unidad: '', precio_costo: 0, precio_contado: 0, precio_credito: 0, stock: 0, stock_minimo: 0 } 
+                    data: { nombre: '', descripcion: '', unidad: '', precio_costo: 0, precio_contado: 0, precio_credito: 0, stock: 0, stock_minimo: 0, controlado: 0 } 
                 };
             }
         };
@@ -230,7 +230,7 @@ const app = createApp({
                     productModal.value.show = false;
                     loadProductos();
                 } else {
-                    showToast('Error guardando', 'error');
+                    showToast(data.error || 'Error guardando', 'error');
                 }
             } catch(e) { showToast('Error de red', 'error'); }
         };
@@ -249,30 +249,71 @@ const app = createApp({
             } catch(e) { showToast('Error de red', 'error'); }
         };
 
-        // --- Cartera (Credits) Logic ---
-        const dashboardStats = ref({ capital_inventario: 0, dinero_caja: 0, plata_calle: 0 });
+        // --- Cartera (los fiaos) · FASE 2 ---
+        // Resumen del semáforo. Se inicializa con la forma completa para que
+        // las tarjetas no se rompan mientras llega la primera respuesta.
+        const carteraResumen = ref({
+            total_cartera: 0, num_fiaos: 0, mora_total: 0, recuperado_mes: 0,
+            vencido:    { cantidad: 0, monto: 0, mora: 0 },
+            por_vencer: { cantidad: 0, monto: 0, mora: 0 },
+            al_dia:     { cantidad: 0, monto: 0, mora: 0 },
+            dias_alerta: 0, mora_mensual: 0
+        });
         const deudoresActivos = ref([]);
-        const abonoModal = ref({ show: false, data: null, monto: 0 });
+        const filtroCartera = ref('todos');
+        const buscarCartera = ref('');
+        const abonoModal = ref({ show: false, data: null, monto: 0, metodo_pago: 'efectivo' });
+        const acuerdoModal = ref({ show: false, data: null, fecha_nueva: '', monto_pactado: 0, observacion: '' });
+        const estadoCuentaModal = ref({ show: false, data: null });
 
-        const loadCarteraDashboard = async () => {
-            try {
-                const res = await fetch(`${API_BASE}cartera.php?action=dashboard`);
-                dashboardStats.value = await res.json();
-            } catch(e) { console.error('Error stats'); }
+        // Fecha de hoy en formato YYYY-MM-DD, sin líos de zona horaria.
+        const hoyISO = new Date().toLocaleDateString('en-CA');
+
+        const cargarCartera = async () => {
+            await Promise.all([cargarResumenCartera(), cargarDeudores()]);
         };
 
-        const loadDeudores = async () => {
+        const cargarResumenCartera = async () => {
             try {
-                const res = await fetch(`${API_BASE}cartera.php?action=list`);
+                const res = await fetch(`${API_BASE}cartera.php?action=resumen`);
+                carteraResumen.value = await res.json();
+            } catch(e) { showToast('No se pudo cargar la cartera', 'error'); }
+        };
+
+        const cargarDeudores = async () => {
+            try {
+                const params = new URLSearchParams({ action: 'list', filtro: filtroCartera.value });
+                if (buscarCartera.value.trim()) params.set('q', buscarCartera.value.trim());
+                const res = await fetch(`${API_BASE}cartera.php?${params.toString()}`);
                 deudoresActivos.value = await res.json();
             } catch(e) { showToast('Error cargando cartera', 'error'); }
+        };
+
+        const filtrarCartera = (filtro) => {
+            filtroCartera.value = filtro;
+            cargarDeudores();
+        };
+
+        const colorSemaforo = (semaforo) => ({
+            rojo:     'bg-red-500',
+            amarillo: 'bg-yellow-400',
+            verde:    'bg-green-500',
+            gris:     'bg-gray-400'
+        }[semaforo] || 'bg-gray-300');
+
+        const textoVencimiento = (d) => {
+            if (d.semaforo === 'gris') return { texto: 'Ya pagó', clase: 'text-gray-400' };
+            if (d.dias_mora > 0) return { texto: `Vencido hace ${d.dias_mora} día(s)`, clase: 'text-red-600 font-semibold' };
+            if (d.dias === 0) return { texto: 'Vence hoy', clase: 'text-amber-600 font-semibold' };
+            return { texto: `Faltan ${d.dias} día(s)`, clase: 'text-gray-500' };
         };
 
         const openAbonoModal = (credito) => {
             abonoModal.value = {
                 show: true,
                 data: credito,
-                monto: credito.saldo_pendiente
+                monto: parseFloat(credito.saldo_pendiente),
+                metodo_pago: 'efectivo'
             };
         };
 
@@ -283,29 +324,110 @@ const app = createApp({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         credito_id: abonoModal.value.data.credito_id,
-                        monto: abonoModal.value.monto
+                        monto: abonoModal.value.monto,
+                        metodo_pago: abonoModal.value.metodo_pago
                     })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    showToast('Abono registrado');
+                    let mensaje = 'Abono registrado';
+                    if (data.mora_cobrada > 0) mensaje += ' · mora cobrada ' + formatMoney(data.mora_cobrada);
+                    if (data.saldado) mensaje = '¡Fiao saldado!';
+                    showToast(mensaje);
                     abonoModal.value.show = false;
-                    loadDeudores();
-                    loadCarteraDashboard();
+                    await cargarCartera();
+                    await cargarResumenPlata();
                 } else {
-                    showToast('Error registrando abono', 'error');
+                    showToast(data.error || 'Error registrando el abono', 'error');
                 }
             } catch(e) { showToast('Error de red', 'error'); }
         };
 
+        const openAcuerdoModal = (credito) => {
+            // Propone una fecha según el plazo largo que tenga configurado el negocio.
+            const dias = parseInt(config.value.plazo_2) || 15;
+            const propuesta = new Date();
+            propuesta.setDate(propuesta.getDate() + dias);
+            acuerdoModal.value = {
+                show: true,
+                data: credito,
+                fecha_nueva: propuesta.toLocaleDateString('en-CA'),
+                monto_pactado: parseFloat(credito.total_a_pagar),
+                observacion: ''
+            };
+        };
+
+        const procesarAcuerdo = async () => {
+            try {
+                const res = await fetch(`${API_BASE}cartera.php?action=acuerdo`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        credito_id: acuerdoModal.value.data.credito_id,
+                        fecha_nueva: acuerdoModal.value.fecha_nueva,
+                        monto_pactado: acuerdoModal.value.monto_pactado,
+                        observacion: acuerdoModal.value.observacion
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Acuerdo guardado · nuevo vencimiento ' + formatDate(data.fecha_nueva));
+                    acuerdoModal.value.show = false;
+                    await cargarCartera();
+                } else {
+                    showToast(data.error || 'Error guardando el acuerdo', 'error');
+                }
+            } catch(e) { showToast('Error de red', 'error'); }
+        };
+
+        const abrirEstadoCuenta = async (credito) => {
+            try {
+                const res = await fetch(`${API_BASE}cartera.php?action=estado_cuenta&credito_id=${credito.credito_id}`);
+                estadoCuentaModal.value = { show: true, data: await res.json() };
+            } catch(e) { showToast('No se pudo abrir el estado de cuenta', 'error'); }
+        };
+
+        const imprimirEstadoCuenta = () => {
+            try {
+                const d = estadoCuentaModal.value.data;
+                printDocumentA4(generateEstadoCuentaHTML(d, config.value), 'Estado_Cuenta_' + d.credito.cliente_cedula + '.pdf');
+            } catch(e) { showToast('No se pudo generar el estado de cuenta', 'error'); }
+        };
+
+        const imprimirCartera = () => {
+            try {
+                printDocumentA4(generateCarteraHTML(carteraResumen.value, deudoresActivos.value, config.value), 'Cartera_' + hoyISO + '.pdf');
+            } catch(e) { showToast('No se pudo generar el reporte', 'error'); }
+        };
+
         const sendWhatsApp = (credito) => {
-            let phone = credito.cliente_telefono.replace(/\D/g, '');
+            let phone = String(credito.cliente_telefono || '').replace(/\D/g, '');
             if (phone.length === 10 && phone.startsWith('3')) {
-                phone = '57' + phone; // Prefix Colombia
+                phone = '57' + phone; // Prefijo Colombia
             }
-            const msg = `Hola ${credito.cliente_nombre}. Te saludamos de ${config.value.nombre_comercial}. Te recordamos que tienes un saldo pendiente de $${parseFloat(credito.saldo_pendiente).toLocaleString('es-CO')} que vence el ${credito.fecha_vencimiento}. Quedamos atentos. ¡Gracias!`;
-            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
-            window.open(url, '_blank');
+            if (!phone) {
+                showToast('Ese cliente no tiene teléfono registrado', 'error');
+                return;
+            }
+
+            let mensaje = config.value.plantilla_whatsapp;
+            if (!mensaje || !String(mensaje).trim()) {
+                mensaje = 'Hola {nombre}, le saludamos de {negocio}. Le recordamos que tiene un saldo pendiente de {saldo} con vencimiento el {fecha}. Gracias por su confianza.';
+            }
+
+            // Los nombres de los reemplazos siguen la plantilla que ya trae la
+            // base: {nombre} = el cliente, {negocio} = el comercio. Se aceptan
+            // también {cliente} y {vence} por si alguien los escribe así.
+            mensaje = String(mensaje)
+                .replace(/\{nombre\}/g,   credito.cliente_nombre || '')
+                .replace(/\{cliente\}/g,  credito.cliente_nombre || '')
+                .replace(/\{negocio\}/g,  config.value.nombre_comercial || 'MINERVOX')
+                .replace(/\{saldo\}/g,    formatMoney(credito.saldo_pendiente))
+                .replace(/\{mora\}/g,     formatMoney(credito.mora))
+                .replace(/\{fecha\}/g,    formatDate(credito.fecha_vencimiento))
+                .replace(/\{vence\}/g,    formatDate(credito.fecha_vencimiento));
+
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(mensaje)}`, '_blank');
         };
 
         // --- Config Logic ---
@@ -667,8 +789,12 @@ const app = createApp({
 
         const formatDate = (dateStr) => {
             if(!dateStr) return '';
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('es-CO');
+            // OJO: no usar new Date('2026-10-30') — JavaScript lo interpreta
+            // como medianoche UTC y en Colombia (UTC-5) mostraría el día
+            // anterior. Las fechas de la base se muestran tal cual vienen.
+            const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+            return new Date(dateStr).toLocaleDateString('es-CO');
         };
 
         return {
@@ -676,7 +802,13 @@ const app = createApp({
             cart, tipoVenta, metodoPago, clienteForm, buscandoCliente, buscarCliente, abonoInicial, diasPlazoCredito, isMobileCartOpen, processingVenta,
             toggleTipoVenta, addToCart, removeFromCart, cartTotal, fechaVencimiento, procesarVenta,
             productModal, openProductModal, saveProduct, deleteProduct,
-            dashboardStats, deudoresActivos, abonoModal, loadCarteraDashboard, loadDeudores, openAbonoModal, procesarAbono, sendWhatsApp,
+            // Cartera (Fase 2)
+            carteraResumen, deudoresActivos, filtroCartera, buscarCartera,
+            abonoModal, acuerdoModal, estadoCuentaModal, hoyISO,
+            cargarCartera, cargarResumenCartera, cargarDeudores, filtrarCartera,
+            colorSemaforo, textoVencimiento, openAbonoModal, procesarAbono,
+            openAcuerdoModal, procesarAcuerdo, abrirEstadoCuenta,
+            imprimirEstadoCuenta, imprimirCartera, sendWhatsApp,
             saveConfig, loadConfig, loadProductos,
             // Mi Plata (contabilidad)
             plataTab, plataRango, plataResumen, plataSerie, plataProductos, plataTipos,

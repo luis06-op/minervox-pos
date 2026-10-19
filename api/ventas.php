@@ -244,10 +244,14 @@ try {
         $saldo_pendiente = round($total - $abono_inicial, 2);
         $estado          = $saldo_pendiente <= 0 ? 'pagado' : 'activo';
 
+        // La tasa de mora se congela aquí, igual que el costo: si mañana
+        // el negocio sube el interés, este fiao conserva el suyo.
+        $mora = (float) $pdo->query('SELECT mora_mensual FROM configuracion WHERE id = 1')->fetchColumn();
+
         $pdo->prepare(
-            'INSERT INTO cartera_creditos (venta_id, saldo_pendiente, fecha_vencimiento, estado)
-             VALUES (?, ?, ?, ?)'
-        )->execute([$venta_id, $saldo_pendiente, $fecha_vencimiento, $estado]);
+            'INSERT INTO cartera_creditos (venta_id, saldo_pendiente, fecha_vencimiento, estado, mora_mensual)
+             VALUES (?, ?, ?, ?, ?)'
+        )->execute([$venta_id, $saldo_pendiente, $fecha_vencimiento, $estado, $mora]);
 
         $credito_id = (int) $pdo->lastInsertId();
 

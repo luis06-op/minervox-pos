@@ -28,7 +28,7 @@
                 <i class="fa-solid fa-cash-register text-xl lg:mr-3"></i>
                 <span class="hidden lg:inline font-semibold">POS</span>
             </button>
-            <button @click="currentView = 'cartera'; loadCarteraDashboard(); loadDeudores();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'cartera'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
+            <button @click="currentView = 'cartera'; cargarCartera();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'cartera'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
                 <i class="fa-solid fa-wallet text-xl lg:mr-3"></i>
                 <span class="hidden lg:inline font-semibold">Cartera</span>
             </button>
@@ -209,64 +209,98 @@
 
             <!-- VIEW: CARTERA -->
             <div v-show="currentView === 'cartera'" class="p-6">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Dashboard Financiero</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-blue-500">
-                        <p class="text-sm text-gray-500 font-semibold mb-1">Capital en Inventario</p>
-                        <h3 class="text-3xl font-bold text-gray-800">{{ formatMoney(dashboardStats.capital_inventario) }}</h3>
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+                    <h2 class="text-3xl font-bold text-gray-800">Cartera · Plata en la calle</h2>
+                    <button @click="imprimirCartera" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
+                        <i class="fa-solid fa-print mr-1"></i> Imprimir
+                    </button>
+                </div>
+
+                <!-- Semáforo de cartera (toque una tarjeta para filtrar) -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div class="bg-white p-5 rounded-xl shadow border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-500 font-semibold mb-1">Plata en la calle</p>
+                        <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(carteraResumen.total_cartera) }}</h3>
+                        <p class="text-xs text-gray-400 mt-1">{{ carteraResumen.num_fiaos }} fiao(s) sin cobrar</p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
-                        <p class="text-sm text-gray-500 font-semibold mb-1">Dinero en Caja (Hoy)</p>
-                        <h3 class="text-3xl font-bold text-gray-800">{{ formatMoney(dashboardStats.dinero_caja) }}</h3>
+                    <div @click="filtrarCartera('vencidos')" class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500 cursor-pointer hover:bg-red-50 transition">
+                        <p class="text-sm text-red-600 font-semibold mb-1"><i class="fa-solid fa-circle text-xs mr-1"></i> Vencido</p>
+                        <h3 class="text-2xl md:text-3xl font-bold text-red-700">{{ formatMoney(carteraResumen.vencido.monto) }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{ carteraResumen.vencido.cantidad }} cliente(s) · mora {{ formatMoney(carteraResumen.vencido.mora) }}</p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl shadow border-l-4 border-red-500">
-                        <p class="text-sm text-gray-500 font-semibold mb-1">Plata en la Calle</p>
-                        <h3 class="text-3xl font-bold text-gray-800">{{ formatMoney(dashboardStats.plata_calle) }}</h3>
+                    <div @click="filtrarCartera('por_vencer')" class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-400 cursor-pointer hover:bg-amber-50 transition">
+                        <p class="text-sm text-amber-600 font-semibold mb-1"><i class="fa-solid fa-circle text-xs mr-1"></i> Por vencer</p>
+                        <h3 class="text-2xl md:text-3xl font-bold text-amber-700">{{ formatMoney(carteraResumen.por_vencer.monto) }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{ carteraResumen.por_vencer.cantidad }} cliente(s)</p>
                     </div>
+                    <div @click="filtrarCartera('al_dia')" class="bg-white p-5 rounded-xl shadow border-l-4 border-green-500 cursor-pointer hover:bg-green-50 transition">
+                        <p class="text-sm text-green-600 font-semibold mb-1"><i class="fa-solid fa-circle text-xs mr-1"></i> Al día</p>
+                        <h3 class="text-2xl md:text-3xl font-bold text-green-700">{{ formatMoney(carteraResumen.al_dia.monto) }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{ carteraResumen.al_dia.cantidad }} cliente(s)</p>
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-500 mb-4">
+                    Recuperado este mes: <strong class="text-green-700">{{ formatMoney(carteraResumen.recuperado_mes) }}</strong>
+                    <span class="mx-2">·</span>
+                    Mora acumulada: <strong class="text-red-700">{{ formatMoney(carteraResumen.mora_total) }}</strong>
+                    <span class="mx-2">·</span>
+                    Se pone amarillo a los <strong>{{ carteraResumen.dias_alerta }}</strong> días del vencimiento y cobra <strong>{{ carteraResumen.mora_mensual }}%</strong> de mora al mes.
+                </p>
+
+                <!-- Filtros y buscador -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button @click="filtrarCartera('todos')" :class="filtroCartera === 'todos' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Todos</button>
+                    <button @click="filtrarCartera('vencidos')" :class="filtroCartera === 'vencidos' ? 'bg-red-600 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Vencidos</button>
+                    <button @click="filtrarCartera('por_vencer')" :class="filtroCartera === 'por_vencer' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Por vencer</button>
+                    <button @click="filtrarCartera('al_dia')" :class="filtroCartera === 'al_dia' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Al día</button>
+                    <input v-model="buscarCartera" @input="cargarDeudores" type="text" placeholder="Buscar por nombre o cédula…" class="border rounded-lg px-4 py-2 flex-1 min-w-[200px]">
                 </div>
 
                 <div class="bg-white rounded-xl shadow overflow-hidden">
                     <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-                        <h3 class="text-lg font-bold">Listado de Fiaos (Créditos Activos)</h3>
-                        <button @click="loadDeudores" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-rotate-right"></i></button>
+                        <h3 class="text-lg font-bold">Los fiaos</h3>
+                        <button @click="cargarDeudores" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-rotate-right"></i></button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full min-w-[920px] text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-100 text-gray-600 text-sm">
-                                    <th class="p-3">Estado</th>
+                                    <th class="p-3 text-center">Semáforo</th>
                                     <th class="p-3">Cliente</th>
-                                    <th class="p-3">Venta</th>
                                     <th class="p-3">Vence</th>
+                                    <th class="p-3 text-right">Mora</th>
                                     <th class="p-3 text-right">Saldo</th>
+                                    <th class="p-3 text-right">Total a pagar</th>
                                     <th class="p-3 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="d in deudoresActivos" :key="d.credito_id" class="border-b hover:bg-gray-50">
                                     <td class="p-3 text-center">
-                                        <div class="w-4 h-4 rounded-full mx-auto" 
-                                             :class="{'bg-green-500': d.color==='green', 'bg-yellow-400': d.color==='yellow', 'bg-red-500': d.color==='red'}"></div>
+                                        <span class="inline-block w-5 h-5 rounded-full" :class="colorSemaforo(d.semaforo)"></span>
                                     </td>
                                     <td class="p-3">
-                                        <p class="font-bold">{{ d.cliente_nombre }}</p>
-                                        <p class="text-xs text-gray-500"><i class="fa-solid fa-phone"></i> {{ d.cliente_telefono }}</p>
+                                        <p class="font-bold whitespace-nowrap">{{ d.cliente_nombre }}</p>
+                                        <p class="text-xs text-gray-500">C.C. {{ d.cliente_cedula }}<span v-if="d.cliente_telefono"> · <i class="fa-solid fa-phone"></i> {{ d.cliente_telefono }}</span></p>
+                                        <p v-if="d.num_acuerdos > 0" class="text-xs text-blue-600 font-semibold mt-1"><i class="fa-solid fa-handshake"></i> Tiene acuerdo de pago</p>
                                     </td>
-                                    <td class="p-3 text-sm">{{ formatDate(d.fecha_venta) }}</td>
-                                    <td class="p-3 text-sm font-semibold" :class="{'text-red-600': d.color==='red'}">{{ formatDate(d.fecha_vencimiento) }}</td>
-                                    <td class="p-3 text-right font-bold">{{ formatMoney(d.saldo_pendiente) }}</td>
-                                    <td class="p-3 text-center space-x-2">
-                                        <button @click="openAbonoModal(d)" class="bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 text-sm" title="Abonar">
-                                            <i class="fa-solid fa-money-bill-wave"></i>
-                                        </button>
-                                        <button @click="sendWhatsApp(d)" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm" title="Recordatorio WA">
-                                            <i class="fa-brands fa-whatsapp"></i>
-                                        </button>
+                                    <td class="p-3 text-sm whitespace-nowrap">
+                                        <p class="font-semibold" :class="d.semaforo === 'rojo' ? 'text-red-600' : ''">{{ formatDate(d.fecha_vencimiento) }}</p>
+                                        <p class="text-xs" :class="textoVencimiento(d).clase">{{ textoVencimiento(d).texto }}</p>
+                                    </td>
+                                    <td class="p-3 text-right text-sm" :class="d.mora > 0 ? 'text-red-600 font-bold' : 'text-gray-400'">{{ formatMoney(d.mora) }}</td>
+                                    <td class="p-3 text-right font-bold whitespace-nowrap">{{ formatMoney(d.saldo_pendiente) }}</td>
+                                    <td class="p-3 text-right font-bold text-blue-700 whitespace-nowrap">{{ formatMoney(d.total_a_pagar) }}</td>
+                                    <td class="p-3 text-center whitespace-nowrap">
+                                        <button @click="openAbonoModal(d)" class="bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200" title="Abonar"><i class="fa-solid fa-money-bill-wave"></i></button>
+                                        <button @click="openAcuerdoModal(d)" class="bg-blue-100 text-blue-700 px-3 py-2 rounded hover:bg-blue-200" title="Acuerdo de pago"><i class="fa-solid fa-handshake"></i></button>
+                                        <button @click="abrirEstadoCuenta(d)" class="bg-gray-100 text-gray-700 px-3 py-2 rounded hover:bg-gray-200" title="Estado de cuenta"><i class="fa-solid fa-file-lines"></i></button>
+                                        <button @click="sendWhatsApp(d)" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600" title="Recordatorio WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
                                     </td>
                                 </tr>
                                 <tr v-if="deudoresActivos.length === 0">
-                                    <td colspan="6" class="p-6 text-center text-gray-500">No hay créditos activos pendientes.</td>
+                                    <td colspan="7" class="p-6 text-center text-gray-500">No hay fiaos que mostrar con este filtro.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -337,12 +371,37 @@
                     <div class="bg-white p-6 rounded-xl shadow">
                         <h3 class="text-xl font-bold mb-4 border-b pb-2">Parámetros de Crédito</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div><label class="block text-sm mb-1">Plazo 1 (Días)</label><input v-model.number="config.plazo_1" type="number" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm mb-1">Plazo 2 (Días)</label><input v-model.number="config.plazo_2" type="number" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm mb-1">Recargo Mora (%)</label><input v-model.number="config.recargo_credito" type="number" step="0.1" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm mb-1">Plazo 1 (días)</label><input v-model.number="config.plazo_1" type="number" class="w-full p-2 border rounded"></div>
+                            <div><label class="block text-sm mb-1">Plazo 2 (días)</label><input v-model.number="config.plazo_2" type="number" class="w-full p-2 border rounded"></div>
+                            <div>
+                                <label class="block text-sm mb-1">Días para la alerta amarilla</label>
+                                <input v-model.number="config.dias_alerta" type="number" min="0" class="w-full p-2 border rounded">
+                                <p class="text-xs text-gray-500 mt-1">El semáforo se pone amarillo cuando faltan estos días o menos.</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Interés de mora mensual (%)</label>
+                                <input v-model.number="config.mora_mensual" type="number" step="0.1" min="0" class="w-full p-2 border rounded">
+                                <p class="text-xs text-gray-500 mt-1">Se cobra por días sobre el saldo vencido.</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Recargo por vender a crédito (%)</label>
+                                <input v-model.number="config.recargo_credito" type="number" step="0.1" min="0" class="w-full p-2 border rounded">
+                                <p class="text-xs text-gray-500 mt-1">Es el sobreprecio del fiao, no la mora.</p>
+                            </div>
                             <div class="md:col-span-3">
                                 <label class="block text-sm mb-1">Texto Legal Pagaré</label>
                                 <textarea v-model="config.texto_pagare" rows="3" class="w-full p-2 border rounded text-sm"></textarea>
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-sm mb-1">Mensaje de WhatsApp para cobrar los fiaos</label>
+                                <textarea v-model="config.plantilla_whatsapp" rows="2" placeholder="Hola {nombre}, le saludamos de {negocio}. Le recordamos su saldo de {saldo} con vencimiento el {fecha}." class="w-full p-2 border rounded text-sm"></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Puede usar <strong>{nombre}</strong> (el cliente), <strong>{negocio}</strong>, <strong>{saldo}</strong>, <strong>{mora}</strong> y <strong>{fecha}</strong>: MINERVOX los reemplaza solos.</p>
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" v-model="config.exigir_cedula_contado" :true-value="1" :false-value="0" class="w-5 h-5">
+                                    <span>Exigir cédula también en las ventas de contado (las sustancias controladas la exigen siempre)</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -792,18 +851,125 @@
         <!-- MODAL: ABONO -->
         <div v-if="abonoModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
-                <h3 class="text-xl font-bold mb-4">Registrar Abono</h3>
+                <h3 class="text-xl font-bold mb-4">Registrar abono</h3>
                 <p class="text-sm text-gray-600 mb-2">Cliente: <strong>{{ abonoModal.data.cliente_nombre }}</strong></p>
-                <p class="text-sm text-gray-600 mb-4">Saldo Actual: <strong class="text-red-600">{{ formatMoney(abonoModal.data.saldo_pendiente) }}</strong></p>
-                
-                <div class="mb-4">
-                    <label class="block text-sm font-bold mb-1">Monto a abonar ($)</label>
-                    <input type="number" v-model.number="abonoModal.monto" :max="abonoModal.data.saldo_pendiente" class="w-full p-3 border rounded text-xl text-right font-bold bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500">
+
+                <div class="text-sm text-gray-600 mb-3 space-y-1 bg-gray-50 p-3 rounded">
+                    <p>Saldo: <strong>{{ formatMoney(abonoModal.data.saldo_pendiente) }}</strong></p>
+                    <p v-if="abonoModal.data.mora > 0" class="text-red-600">Mora ({{ abonoModal.data.dias_mora }} días): <strong>{{ formatMoney(abonoModal.data.mora) }}</strong></p>
+                    <p class="text-base">Total a pagar: <strong class="text-blue-700">{{ formatMoney(abonoModal.data.total_a_pagar) }}</strong></p>
                 </div>
-                
+
+                <label class="block text-sm font-bold mb-1">¿Cuánto abona? ($)</label>
+                <input type="number" v-model.number="abonoModal.monto" :max="abonoModal.data.total_a_pagar" class="w-full p-3 border rounded text-xl text-right font-bold bg-green-50 mb-2">
+                <div class="flex gap-2 mb-4">
+                    <button type="button" @click="abonoModal.monto = abonoModal.data.saldo_pendiente" class="flex-1 text-xs bg-gray-100 py-2 rounded font-semibold hover:bg-gray-200">Solo el saldo</button>
+                    <button type="button" @click="abonoModal.monto = abonoModal.data.total_a_pagar" class="flex-1 text-xs bg-gray-100 py-2 rounded font-semibold hover:bg-gray-200">Con la mora</button>
+                </div>
+
+                <label class="block text-sm font-bold mb-1">¿Cómo pagó?</label>
+                <select v-model="abonoModal.metodo_pago" class="w-full p-3 border rounded mb-4">
+                    <option value="efectivo">Efectivo (entra a la caja)</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="otro">Otro</option>
+                </select>
+
                 <div class="flex space-x-3">
                     <button @click="abonoModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                    <button @click="procesarAbono" :disabled="abonoModal.monto <= 0 || abonoModal.monto > abonoModal.data.saldo_pendiente" class="flex-1 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 disabled:opacity-50">Guardar</button>
+                    <button @click="procesarAbono" :disabled="abonoModal.monto <= 0 || abonoModal.monto > abonoModal.data.total_a_pagar" class="flex-1 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 disabled:opacity-50">Guardar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: ACUERDO DE PAGO -->
+        <div v-if="acuerdoModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+                <h3 class="text-xl font-bold mb-1">Acuerdo de pago</h3>
+                <p class="text-sm text-gray-500 mb-4">Corra la fecha de un fiao que no se pudo pagar. Queda el registro de quién pactó qué.</p>
+
+                <p class="text-sm text-gray-600 mb-3">Cliente: <strong>{{ acuerdoModal.data.cliente_nombre }}</strong></p>
+
+                <label class="block text-sm font-bold mb-1">Nuevo vencimiento</label>
+                <input type="date" v-model="acuerdoModal.fecha_nueva" :min="hoyISO" class="w-full p-3 border rounded mb-3">
+
+                <label class="block text-sm font-bold mb-1">Monto pactado ($)</label>
+                <input type="number" v-model.number="acuerdoModal.monto_pactado" class="w-full p-3 border rounded text-right font-bold bg-blue-50 mb-1">
+                <p class="text-xs text-gray-500 mb-3">Saldo + mora actual: <strong>{{ formatMoney(acuerdoModal.data.total_a_pagar) }}</strong></p>
+
+                <label class="block text-sm font-bold mb-1">Observación (opcional)</label>
+                <input type="text" v-model="acuerdoModal.observacion" placeholder="Ej: pagó una parte y pidió plazo" class="w-full p-3 border rounded mb-4">
+
+                <div class="flex space-x-3">
+                    <button @click="acuerdoModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
+                    <button @click="procesarAcuerdo" :disabled="!acuerdoModal.fecha_nueva || acuerdoModal.monto_pactado <= 0" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 disabled:opacity-50">Guardar acuerdo</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: ESTADO DE CUENTA -->
+        <div v-if="estadoCuentaModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Estado de cuenta</h3>
+                    <button @click="estadoCuentaModal.show = false" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                </div>
+
+                <div v-if="estadoCuentaModal.data">
+                    <div class="bg-gray-50 p-4 rounded mb-4">
+                        <p class="font-bold text-lg">{{ estadoCuentaModal.data.credito.cliente_nombre }}</p>
+                        <p class="text-sm text-gray-600">C.C. {{ estadoCuentaModal.data.credito.cliente_cedula }}</p>
+                        <p class="text-sm text-gray-600">{{ estadoCuentaModal.data.credito.cliente_ubicacion }}</p>
+                        <p class="text-sm text-gray-600">Fiao del {{ formatDate(estadoCuentaModal.data.credito.fecha_venta) }}</p>
+                    </div>
+
+                    <h4 class="font-bold mb-2">Qué se llevó</h4>
+                    <table class="w-full text-left text-sm mb-4">
+                        <tbody>
+                            <tr v-for="(p, i) in estadoCuentaModal.data.productos" :key="i" class="border-b">
+                                <td class="py-2">{{ p.cantidad }} {{ p.unidad }} × {{ p.nombre }}</td>
+                                <td class="py-2 text-right font-semibold">{{ formatMoney(p.subtotal) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 class="font-bold mb-2">Qué ha pagado</h4>
+                    <table class="w-full text-left text-sm mb-4">
+                        <tbody>
+                            <tr v-for="a in estadoCuentaModal.data.abonos" :key="a.id" class="border-b">
+                                <td class="py-2">{{ formatDate(a.fecha) }} <span class="text-gray-400">({{ a.metodo_pago }})</span></td>
+                                <td class="py-2 text-right font-semibold text-green-700">{{ formatMoney(a.monto) }}</td>
+                            </tr>
+                            <tr v-if="estadoCuentaModal.data.abonos.length === 0">
+                                <td colspan="2" class="py-2 text-center text-gray-400">Todavía no ha abonado nada</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div v-if="estadoCuentaModal.data.acuerdos.length > 0">
+                        <h4 class="font-bold mb-2">Acuerdos de pago</h4>
+                        <table class="w-full text-left text-sm mb-4">
+                            <tbody>
+                                <tr v-for="ac in estadoCuentaModal.data.acuerdos" :key="ac.id" class="border-b">
+                                    <td class="py-2">
+                                        Se corrió de {{ formatDate(ac.fecha_antes) }} a {{ formatDate(ac.fecha_nueva) }}
+                                        <p v-if="ac.observacion" class="text-xs text-gray-500">{{ ac.observacion }}</p>
+                                    </td>
+                                    <td class="py-2 text-right font-semibold">{{ formatMoney(ac.monto_pactado) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-blue-50 p-4 rounded space-y-1">
+                        <div class="flex justify-between"><span>Saldo:</span><strong>{{ formatMoney(estadoCuentaModal.data.credito.saldo_pendiente) }}</strong></div>
+                        <div class="flex justify-between text-red-600"><span>Mora:</span><strong>{{ formatMoney(estadoCuentaModal.data.credito.mora) }}</strong></div>
+                        <div class="flex justify-between text-lg border-t pt-2"><span>Total a pagar:</span><strong class="text-blue-700">{{ formatMoney(estadoCuentaModal.data.credito.total_a_pagar) }}</strong></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-4">
+                    <button @click="estadoCuentaModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cerrar</button>
+                    <button @click="imprimirEstadoCuenta" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
                 </div>
             </div>
         </div>
@@ -827,6 +993,11 @@
                         <div><label class="block text-xs font-bold">Stock Actual</label><input v-model.number="productModal.data.stock" type="number" step="0.1" class="w-full p-2 border rounded"></div>
                         <div><label class="block text-xs font-bold">Alerta Stock Mínimo</label><input v-model.number="productModal.data.stock_minimo" type="number" step="0.1" class="w-full p-2 border rounded"></div>
                     </div>
+
+                    <label class="flex items-center gap-2 text-sm bg-amber-50 p-3 rounded border border-amber-200">
+                        <input type="checkbox" v-model="productModal.data.controlado" :true-value="1" :false-value="0" class="w-5 h-5">
+                        <span><strong>Sustancia controlada</strong> (exige cédula para venderse)</span>
+                    </label>
 
                     <div class="flex space-x-3 mt-4 pt-4 border-t">
                         <button type="button" @click="productModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>

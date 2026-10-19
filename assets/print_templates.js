@@ -254,8 +254,156 @@ function generateCierreCajaHTML(datos, config) {
 }
 
 /**
- * Imprime/exporta un reporte en tamaño carta (los recibos van en 80 mm).
+ * Reporte de cartera: el semáforo, quién debe, cuánto y desde cuándo.
  */
+function generateCarteraHTML(resumen, deudores, config) {
+    const color = { rojo: '#b91c1c', amarillo: '#b45309', verde: '#047857', gris: '#6b7280' };
+    const etiqueta = { rojo: 'VENCIDO', amarillo: 'POR VENCER', verde: 'AL DÍA', gris: 'PAGADO' };
+
+    // Fecha de hoy en hora local (no usar toISOString: en Colombia después
+    // de las 7 p.m. devolvería el día siguiente).
+    const ahora = new Date();
+    const hoyISO = ahora.getFullYear() + '-' +
+        String(ahora.getMonth() + 1).padStart(2, '0') + '-' +
+        String(ahora.getDate()).padStart(2, '0');
+
+    const filas = (deudores || []).map(d => `
+        <tr>
+            <td style="padding: 6px; border-bottom: 1px solid #eee; color: ${color[d.semaforo] || '#333'}; font-weight: bold; font-size: 10px;">${etiqueta[d.semaforo] || ''}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee;">${escaparHtml(d.cliente_nombre)}<br><span style="font-size: 10px; color: #666;">C.C. ${escaparHtml(d.cliente_cedula)}</span></td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee; font-size: 11px;">${escaparHtml(_fechaBonita(d.fecha_vencimiento))}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee; font-size: 11px; text-align: right; color: ${d.dias_mora > 0 ? '#b91c1c' : '#555'};">${d.dias_mora > 0 ? 'Mora ' + d.dias_mora + ' d.' : (d.dias + ' d.')}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right; color: #b91c1c;">${fmtPesos(d.mora)}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right;">${fmtPesos(d.saldo_pendiente)}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${fmtPesos(d.total_a_pagar)}</td>
+        </tr>`).join('');
+
+    return `
+    ${_encabezadoReporte(config, 'Cartera · Plata en la calle', 'Al ' + escaparHtml(_fechaBonita(hoyISO)))}
+
+        <table style="width: 100%; font-size: 12px; margin-bottom: 16px; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 8px; background: #eff6ff;">
+                    <div style="color: #1e3a8a; font-weight: bold;">Plata en la calle</div>
+                    <div style="font-size: 16px; font-weight: bold;">${fmtPesos(resumen.total_cartera)}</div>
+                    <div style="font-size: 10px; color: #666;">${resumen.num_fiaos} fiao(s)</div>
+                </td>
+                <td style="padding: 8px; background: #fef2f2;">
+                    <div style="color: #b91c1c; font-weight: bold;">Vencido</div>
+                    <div style="font-size: 16px; font-weight: bold;">${fmtPesos(resumen.vencido ? resumen.vencido.monto : 0)}</div>
+                    <div style="font-size: 10px; color: #666;">${resumen.vencido ? resumen.vencido.cantidad : 0} cliente(s)</div>
+                </td>
+                <td style="padding: 8px; background: #fffbeb;">
+                    <div style="color: #b45309; font-weight: bold;">Por vencer</div>
+                    <div style="font-size: 16px; font-weight: bold;">${fmtPesos(resumen.por_vencer ? resumen.por_vencer.monto : 0)}</div>
+                    <div style="font-size: 10px; color: #666;">${resumen.por_vencer ? resumen.por_vencer.cantidad : 0} cliente(s)</div>
+                </td>
+                <td style="padding: 8px; background: #ecfdf5;">
+                    <div style="color: #047857; font-weight: bold;">Al día</div>
+                    <div style="font-size: 16px; font-weight: bold;">${fmtPesos(resumen.al_dia ? resumen.al_dia.monto : 0)}</div>
+                    <div style="font-size: 10px; color: #666;">${resumen.al_dia ? resumen.al_dia.cantidad : 0} cliente(s)</div>
+                </td>
+            </tr>
+        </table>
+
+        <p style="font-size: 12px; color: #555;">
+            Mora acumulada: <strong style="color: #b91c1c;">${fmtPesos(resumen.mora_total)}</strong>
+            &nbsp;·&nbsp; Recuperado este mes: <strong style="color: #047857;">${fmtPesos(resumen.recuperado_mes)}</strong>
+        </p>
+
+        <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #1e3a8a; color: #fff;">
+                    <th style="padding: 6px; text-align: left;">Estado</th>
+                    <th style="padding: 6px; text-align: left;">Cliente</th>
+                    <th style="padding: 6px; text-align: left;">Vence</th>
+                    <th style="padding: 6px; text-align: right;">Días</th>
+                    <th style="padding: 6px; text-align: right;">Mora</th>
+                    <th style="padding: 6px; text-align: right;">Saldo</th>
+                    <th style="padding: 6px; text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>${filas || '<tr><td colspan="7" style="padding: 12px; text-align: center; color: #666;">No hay fiaos activos.</td></tr>'}</tbody>
+        </table>
+
+        <p style="font-size: 10px; color: #666; margin-top: 10px;">
+            El semáforo se pone amarillo a los ${resumen.dias_alerta} días del vencimiento y la mora es del ${resumen.mora_mensual}% mensual sobre el saldo vencido.
+        </p>
+    ${_pieReporte()}`;
+}
+
+/**
+ * Estado de cuenta de un fiao: qué se llevó, qué ha pagado y qué debe.
+ */
+function generateEstadoCuentaHTML(datos, config) {
+    const c = datos.credito;
+    const etiquetaMetodo = { efectivo: 'Efectivo', transferencia: 'Transferencia', otro: 'Otro' };
+
+    const productos = (datos.productos || []).map(p => `
+        <tr>
+            <td style="padding: 5px; border-bottom: 1px solid #eee;">${escaparHtml(p.nombre)} <span style="color:#666; font-size: 11px;">(${escaparHtml(p.cantidad)} ${escaparHtml(p.unidad || '')})</span></td>
+            <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right;">${fmtPesos(p.subtotal)}</td>
+        </tr>`).join('');
+
+    const abonos = (datos.abonos || []).map(a => `
+        <tr>
+            <td style="padding: 5px; border-bottom: 1px solid #eee;">${escaparHtml(_fechaBonita(a.fecha))} <span style="color:#666; font-size: 11px;">(${escaparHtml(etiquetaMetodo[a.metodo_pago] || a.metodo_pago)})</span></td>
+            <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right; color: #047857;">${fmtPesos(a.monto)}</td>
+        </tr>`).join('');
+
+    const acuerdos = (datos.acuerdos || []).map(ac => `
+        <tr>
+            <td style="padding: 5px; border-bottom: 1px solid #eee; font-size: 11px;">
+                Se corrió de ${escaparHtml(_fechaBonita(ac.fecha_antes))} a ${escaparHtml(_fechaBonita(ac.fecha_nueva))}
+                ${ac.observacion ? '<br><span style="color:#666;">' + escaparHtml(ac.observacion) + '</span>' : ''}
+            </td>
+            <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right;">${fmtPesos(ac.monto_pactado)}</td>
+        </tr>`).join('');
+
+    return `
+    ${_encabezadoReporte(config, 'Estado de cuenta', 'Fiao del ' + escaparHtml(_fechaBonita(c.fecha_venta)))}
+
+        <p style="font-size: 13px; margin: 0 0 4px;"><strong>${escaparHtml(c.cliente_nombre)}</strong></p>
+        <p style="font-size: 12px; color: #555; margin: 0 0 12px;">
+            C.C. ${escaparHtml(c.cliente_cedula)}
+            ${c.cliente_telefono ? ' &nbsp;|&nbsp; Tel: ' + escaparHtml(c.cliente_telefono) : ''}
+            ${c.cliente_ubicacion ? ' &nbsp;|&nbsp; ' + escaparHtml(c.cliente_ubicacion) : ''}
+        </p>
+
+        <h3 style="font-size: 14px; margin: 12px 0 4px;">Qué se llevó</h3>
+        <table style="width: 100%; font-size: 12px; border-collapse: collapse;">${productos}</table>
+
+        <h3 style="font-size: 14px; margin: 12px 0 4px;">Qué ha pagado</h3>
+        <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+            ${abonos || '<tr><td style="padding: 5px; color: #666;">Todavía no ha abonado nada.</td></tr>'}
+        </table>
+
+        ${acuerdos ? '<h3 style="font-size: 14px; margin: 12px 0 4px;">Acuerdos de pago</h3><table style="width: 100%; font-size: 12px; border-collapse: collapse;">' + acuerdos + '</table>' : ''}
+
+        <table style="width: 60%; margin-left: 40%; margin-top: 16px; font-size: 13px; border-collapse: collapse;">
+            <tr><td style="padding: 4px;">Saldo:</td><td style="padding: 4px; text-align: right; font-weight: bold;">${fmtPesos(c.saldo_pendiente)}</td></tr>
+            <tr><td style="padding: 4px;">Mora (${c.dias_mora || 0} días):</td><td style="padding: 4px; text-align: right; font-weight: bold; color: #b91c1c;">${fmtPesos(c.mora)}</td></tr>
+            <tr><td style="padding: 6px; border-top: 2px solid #1e3a8a; font-weight: bold;">Total a pagar:</td><td style="padding: 6px; border-top: 2px solid #1e3a8a; text-align: right; font-weight: bold; color: #1e3a8a;">${fmtPesos(c.total_a_pagar)}</td></tr>
+        </table>
+
+        <table style="width: 100%; margin-top: 50px; font-size: 11px; text-align: center;">
+            <tr>
+                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px;">Firma del cliente</td>
+                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px;">${escaparHtml(config.nombre_comercial)}</td>
+            </tr>
+        </table>
+    ${_pieReporte()}`;
+}
+
+/**
+ * Muestra una fecha de la base (YYYY-MM-DD o YYYY-MM-DD HH:MM:SS) como
+ * DD/MM/AAAA, sin que la zona horaria la corra un día.
+ */
+function _fechaBonita(fecha) {
+    const m = String(fecha == null ? '' : fecha).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(fecha || '');
+}
+
 function printDocumentA4(htmlContent, filename) {
     const container = document.getElementById('pdf-container');
     container.innerHTML = htmlContent;
