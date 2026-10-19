@@ -124,7 +124,12 @@ git clone https://github.com/luis06-op/minervox-pos.git
 **2️⃣ Inicia Apache y MySQL** desde el Panel de Control de XAMPP.
 
 **3️⃣ Importa la base de datos:**
-Abre `phpMyAdmin` (`http://localhost/phpmyadmin`), crea una base de datos nueva e importa el script `database.sql` incluido en el repositorio — el modelo de datos queda listo sin pasos adicionales.
+Abre `phpMyAdmin` (`http://localhost/phpmyadmin`) y crea una base de datos nueva. Importa **en este orden**:
+
+1. `database.sql` — crea el esquema base (las 7 tablas originales).
+2. `migracion_minervox_v2.sql` — agrega contabilidad, usuarios y trazabilidad.
+
+> ⚠️ **Nunca** importes un archivo que empiece con `DROP DATABASE`: borraría los datos reales del negocio.
 
 **4️⃣ Accede a la aplicación** desde el navegador:
 ```
@@ -141,7 +146,8 @@ http://localhost/minervox-pos/
 minervox-pos/
 ├── 📁 api/              # Endpoints PHP (PDO)
 ├── 📁 assets/           # CSS, JS, íconos, imágenes
-├── 📄 database.sql      # Esquema de la base de datos
+├── 📄 database.sql      # Esquema base (las 7 tablas originales)
+├── 📄 migracion_minervox_v2.sql  # Migración v2: contabilidad, usuarios, kardex
 ├── 📄 index.html        # Punto de entrada PWA
 └── 📄 README.md
 ```
