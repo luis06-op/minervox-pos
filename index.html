@@ -31,11 +31,11 @@
         };
     </script>
     <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/fontawesome/all.min.css">
     <!-- Vue.js 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="assets/vue/vue.global.js"></script>
     <!-- html2pdf -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="assets/html2pdf/html2pdf.bundle.min.js"></script>
     <!-- Custom Styles -->
     <link rel="stylesheet" href="assets/styles.css?v=2">
 </head>
@@ -1593,5 +1593,17 @@
 
     <script src="assets/print_templates.js"></script>
     <script src="assets/app.js"></script>
+<!-- Registro del Service Worker para modo offline -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/minervox-pos/assets/sw.js')
+      .then(registration => {
+        console.log('SW registrado:', registration.scope);
+      })
+      .catch(error => {
+        console.error('Error al registrar SW:', error);
+      });
+  }
+</script>
 </body>
 </html>
