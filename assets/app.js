@@ -364,7 +364,10 @@ const app = createApp({
                     producto_id: prod.id,
                     nombre: prod.nombre,
                     cantidad: 1,
-                    precio_unitario: parseFloat(tipoVenta.value === 'contado' ? prod.precio_contado : prod.precio_credito)
+                    precio_unitario: parseFloat(tipoVenta.value === 'contado' ? prod.precio_contado : prod.precio_credito),
+                    // FASE 4: se guarda en el carrito para saber, sin volver a
+                    // mirar el catálogo, si hay que pedir la cédula.
+                    controlado: prod.controlado ? 1 : 0
                 });
             }
             showToast(`${prod.nombre} añadido`);
@@ -378,6 +381,23 @@ const app = createApp({
             return cart.value.reduce((sum, item) => sum + (item.cantidad * item.precio_unitario), 0);
         });
 
+        // =================================================================
+        // QUIÉN DEBE QUEDAR REGISTRADO EN LA VENTA (Fase 4)
+        //
+        // Tres casos obligan a pedir cédula y nombre:
+        //   · un fiao (siempre),
+        //   · una sustancia controlada (así sea de contado: es el rastro
+        //     que pide la autoridad),
+        //   · toda venta de contado, si el dueño lo marcó en Ajustes.
+        // El backend vuelve a exigirlo; esto es solo para no dejar llegar
+        // la venta hasta allá y avisar a tiempo.
+        // =================================================================
+        const carritoControlado = computed(() => cart.value.some(i => Number(i.controlado) === 1));
+        const exigeCedulaContado = computed(() => Number(config.value.exigir_cedula_contado) === 1);
+        const requiereCliente = computed(() =>
+            tipoVenta.value === 'credito' || carritoControlado.value || exigeCedulaContado.value
+        );
+
         const fechaVencimiento = computed(() => {
             if (diasPlazoCredito.value === 'custom') return '';
             const d = new Date();
@@ -386,11 +406,20 @@ const app = createApp({
         });
 
         const procesarVenta = async () => {
-            if (tipoVenta.value === 'credito') {
-                if (!clienteForm.value.cedula || !clienteForm.value.nombre) {
+            if (requiereCliente.value && (!clienteForm.value.cedula || !clienteForm.value.nombre)) {
+                if (tipoVenta.value === 'credito') {
                     return showToast('Complete cédula y nombre del cliente', 'error');
                 }
+                if (carritoControlado.value) {
+                    return showToast('Sustancia controlada: escriba la cédula y el nombre del cliente', 'error');
+                }
+                return showToast('Escriba la cédula y el nombre del cliente', 'error');
+            }
+            if (tipoVenta.value === 'credito') {
                 if (!fechaVencimiento.value) return showToast('Defina fecha de vencimiento', 'error');
+                if (abonoInicial.value > cartTotal.value) {
+                    return showToast('El abono inicial no puede ser mayor que el total', 'error');
+                }
             }
 
             processingVenta.value = true;
@@ -745,6 +774,8 @@ const app = createApp({
         const abrirPlata = () => {
             if (!esAdmin.value) plataTab.value = 'cierre';
             currentView.value = 'plata';
+            // Si se quedó en la pestaña de ventas, refrescarla al volver.
+            if (esAdmin.value && plataTab.value === 'ventas') cargarVentas();
             cargarPlata();
         };
 
@@ -1049,6 +1080,124 @@ const app = createApp({
             } catch(e) { showToast('No se pudo generar el cierre', 'error'); }
         };
 
+        // ============================================================
+        // VENTAS: lista, anulación y libro de controlados (Fase 4)
+        // ============================================================
+        const ventasFiltro = ref({ desde: '', hasta: '', q: '', controladas: false });
+        const ventasLista = ref([]);
+        const ventasResumen = ref({ cantidad: 0, total: 0, anuladas: 0, controladas: 0 });
+        const ventasTruncada = ref(false);
+        const cargandoVentas = ref(false);
+        const anularModal = ref({ show: false, venta: null, motivo: '' });
+        const anulando = ref(false);
+
+        /** La fecha de hoy en el reloj del negocio (Y-m-d, sin líos de UTC). */
+        const hoyLocal = () => new Date().toLocaleDateString('en-CA');
+
+        const iniciarFiltroVentas = () => {
+            if (!ventasFiltro.value.desde) ventasFiltro.value.desde = hoyLocal();
+            if (!ventasFiltro.value.hasta) ventasFiltro.value.hasta = hoyLocal();
+        };
+
+        const cargarVentas = async () => {
+            iniciarFiltroVentas();
+            cargandoVentas.value = true;
+            try {
+                const params = new URLSearchParams({
+                    action: 'list',
+                    desde:  ventasFiltro.value.desde,
+                    hasta:  ventasFiltro.value.hasta,
+                });
+                if (ventasFiltro.value.q) params.set('q', ventasFiltro.value.q);
+                if (ventasFiltro.value.controladas) params.set('controladas', '1');
+
+                const res  = await api(`${API_BASE}ventas.php?${params.toString()}`);
+                const data = await res.json();
+                ventasLista.value   = data.ventas || [];
+                ventasResumen.value = data.resumen || { cantidad: 0, total: 0, anuladas: 0, controladas: 0 };
+                ventasTruncada.value = !!data.truncada;
+            } catch (e) {
+                showToast('No se pudieron cargar las ventas', 'error');
+            } finally {
+                cargandoVentas.value = false;
+            }
+        };
+
+        const abrirAnularModal = (venta) => {
+            anularModal.value = { show: true, venta, motivo: '' };
+        };
+
+        /**
+         * Anula una venta. El servidor decide si se puede: no se anula un
+         * fiao con abonos ni un día que ya tiene cierre de caja. Aquí solo
+         * se pide el motivo y se muestra lo que el servidor responda.
+         */
+        const confirmarAnulacion = async () => {
+            const m = anularModal.value;
+            if (!m.venta) return;
+            if (m.motivo.trim().length < 5) {
+                return showToast('Escriba el motivo (mínimo 5 letras)', 'error');
+            }
+
+            anulando.value = true;
+            try {
+                const res = await api(`${API_BASE}ventas.php?action=anular`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ venta_id: m.venta.id, motivo: m.motivo.trim() })
+                });
+                const data = await res.json();
+
+                if (!data.success) {
+                    showToast(data.error || 'No se pudo anular la venta', 'error');
+                    return;
+                }
+
+                const aviso = (data.advertencias && data.advertencias.length)
+                    ? data.advertencias[0]
+                    : `Venta #${m.venta.id} anulada`;
+                showToast(aviso, (data.advertencias && data.advertencias.length) ? 'error' : 'success');
+
+                anularModal.value = { show: false, venta: null, motivo: '' };
+                await Promise.all([cargarVentas(), cargarResumenPlata(), loadProductos()]);
+            } catch (e) {
+                /* api() ya avisó (401/403) */
+            } finally {
+                anulando.value = false;
+            }
+        };
+
+        /** Imprime el libro de controlados del mismo periodo del filtro. */
+        const imprimirLibroControlados = async () => {
+            iniciarFiltroVentas();
+            try {
+                const params = new URLSearchParams({
+                    action: 'libro',
+                    desde:  ventasFiltro.value.desde,
+                    hasta:  ventasFiltro.value.hasta,
+                });
+                const res  = await api(`${API_BASE}ventas.php?${params.toString()}`);
+                const data = await res.json();
+
+                if (!data.success) {
+                    showToast(data.error || 'No se pudo armar el libro', 'error');
+                    return;
+                }
+                if (!data.filas || data.filas.length === 0) {
+                    showToast('No hay ventas de controlados en ese periodo', 'error');
+                    return;
+                }
+
+                printDocumentA4(
+                    generateLibroControladosHTML(data, config.value),
+                    `Libro_Controlados_${data.desde}_${data.hasta}.pdf`,
+                    'landscape'
+                );
+            } catch (e) {
+                showToast('No se pudo generar el libro', 'error');
+            }
+        };
+
         // Utilities
         const formatMoney = (val) => {
             return '$ ' + parseFloat(val).toLocaleString('es-CO');
@@ -1072,6 +1221,7 @@ const app = createApp({
             usuarios, usuarioModal, cargarUsuarios, openUsuarioModal, guardarUsuario, desactivarUsuario,
             cart, tipoVenta, metodoPago, clienteForm, buscandoCliente, buscarCliente, abonoInicial, diasPlazoCredito, isMobileCartOpen, processingVenta,
             toggleTipoVenta, addToCart, removeFromCart, cartTotal, fechaVencimiento, procesarVenta,
+            carritoControlado, exigeCedulaContado, requiereCliente,
             productModal, openProductModal, saveProduct, deleteProduct,
             // Cartera (Fase 2)
             carteraResumen, deudoresActivos, filtroCartera, buscarCartera,
@@ -1091,6 +1241,9 @@ const app = createApp({
             abrirPagoProveedor, procesarPagoProveedor, cargarCierre, guardarCierre,
             alturaBarra, formatMoneyCorto, etiquetaPeriodo,
             imprimirResumenPlata, imprimirCierre,
+            // Ventas y controlados (Fase 4)
+            ventasFiltro, ventasLista, ventasResumen, ventasTruncada, cargandoVentas, anularModal, anulando,
+            cargarVentas, abrirAnularModal, confirmarAnulacion, imprimirLibroControlados,
             formatMoney, formatDate
         };
     }

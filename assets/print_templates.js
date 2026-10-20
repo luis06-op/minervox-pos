@@ -396,6 +396,76 @@ function generateEstadoCuentaHTML(datos, config) {
 }
 
 /**
+ * Libro de sustancias controladas (Fase 4).
+ *
+ * Una línea por producto controlado vendido, con la cédula de quien lo
+ * compró. Es el papel que pide la autoridad, así que se imprime aparte y
+ * no como un simple filtro de la lista de ventas.
+ */
+function generateLibroControladosHTML(datos, config) {
+    const filas = (datos.filas || []).map(f => `
+        <tr>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px;">#${escaparHtml(f.venta_id)}</td>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px; white-space: nowrap;">${escaparHtml(_fechaBonita(f.fecha))}</td>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px; white-space: nowrap;">${escaparHtml(f.cedula || '—')}</td>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px;">
+                ${escaparHtml(f.cliente || '—')}
+                ${f.ubicacion ? '<br><span style="color:#666; font-size: 10px;">' + escaparHtml(f.ubicacion) + '</span>' : ''}
+            </td>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px;">${escaparHtml(f.producto)}</td>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px; text-align: center; white-space: nowrap;">${escaparHtml(f.cantidad)} ${escaparHtml(f.unidad || '')}</td>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px; text-align: right; white-space: nowrap;">${fmtPesos(f.subtotal)}</td>
+            <td style="padding: 5px 4px; border-bottom: 1px solid #e5e7eb; font-size: 11px;">${escaparHtml(f.vendedor || '—')}</td>
+        </tr>`).join('');
+
+    const t = datos.totales || { lineas: 0, unidades: 0, valor: 0 };
+
+    return `
+    ${_encabezadoReporte(config, 'Libro de sustancias controladas',
+        'Del ' + escaparHtml(_fechaBonita(datos.desde)) + ' al ' + escaparHtml(_fechaBonita(datos.hasta)) +
+        ' · ' + t.lineas + ' registros')}
+
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f3f4f6; font-size: 11px;">
+                    <th style="padding: 6px 4px; text-align: left;">Venta</th>
+                    <th style="padding: 6px 4px; text-align: left;">Fecha</th>
+                    <th style="padding: 6px 4px; text-align: left;">Cédula</th>
+                    <th style="padding: 6px 4px; text-align: left;">Comprador</th>
+                    <th style="padding: 6px 4px; text-align: left;">Producto</th>
+                    <th style="padding: 6px 4px; text-align: center;">Cantidad</th>
+                    <th style="padding: 6px 4px; text-align: right;">Valor</th>
+                    <th style="padding: 6px 4px; text-align: left;">Vendido por</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filas || '<tr><td colspan="8" style="padding: 14px; text-align: center; color: #888;">Sin ventas de sustancias controladas en este periodo</td></tr>'}
+            </tbody>
+            <tfoot>
+                <tr style="background: #f9fafb; font-weight: bold; font-size: 12px;">
+                    <td colspan="5" style="padding: 6px;">TOTAL</td>
+                    <td style="padding: 6px; text-align: center;">${t.unidades}</td>
+                    <td style="padding: 6px; text-align: right;">${fmtPesos(t.valor)}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <p style="font-size: 10px; color: #555; margin-top: 14px; line-height: 1.5;">
+            Se certifica que en cada una de estas ventas se verificó la cédula del comprador y que el producto
+            corresponde a una sustancia controlada. Las ventas anuladas no aparecen en este libro.
+        </p>
+
+        <table style="width: 100%; margin-top: 50px; font-size: 11px; text-align: center;">
+            <tr>
+                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px;">Firma del responsable</td>
+                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px;">C.C. del responsable</td>
+            </tr>
+        </table>
+    ${_pieReporte()}`;
+}
+
+/**
  * Muestra una fecha de la base (YYYY-MM-DD o YYYY-MM-DD HH:MM:SS) como
  * DD/MM/AAAA, sin que la zona horaria la corra un día.
  */
@@ -404,7 +474,7 @@ function _fechaBonita(fecha) {
     return m ? `${m[3]}/${m[2]}/${m[1]}` : String(fecha || '');
 }
 
-function printDocumentA4(htmlContent, filename) {
+function printDocumentA4(htmlContent, filename, orientacion = 'portrait') {
     const container = document.getElementById('pdf-container');
     container.innerHTML = htmlContent;
     container.style.display = 'block';
@@ -414,7 +484,7 @@ function printDocumentA4(htmlContent, filename) {
         filename:     filename,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: orientacion }
     };
 
     html2pdf().set(opt).from(container).save().then(() => {

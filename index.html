@@ -192,6 +192,9 @@
                             <div>
                                 <h3 class="font-semibold text-gray-800 leading-tight">{{ prod.nombre }}</h3>
                                 <p class="text-xs text-gray-500 mt-1">Stock: <span :class="{'text-red-500 font-bold': parseFloat(prod.stock) <= parseFloat(prod.stock_minimo)}">{{ prod.stock }}</span> {{ prod.unidad }}</p>
+                                <span v-if="prod.controlado" class="inline-block mt-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>Controlado
+                                </span>
                             </div>
                             <div class="text-right mt-2">
                                 <span class="text-lg font-bold text-blue-600">
@@ -220,7 +223,10 @@
                         
                         <div v-for="(item, index) in cart" :key="index" class="mb-4 bg-gray-50 p-3 rounded border border-gray-200">
                             <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-semibold text-sm truncate pr-2">{{ item.nombre }}</h4>
+                                <h4 class="font-semibold text-sm truncate pr-2">
+                                    {{ item.nombre }}
+                                    <span v-if="item.controlado" class="ml-1 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">controlado</span>
+                                </h4>
                                 <button @click="removeFromCart(index)" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -231,15 +237,27 @@
                             </div>
                         </div>
 
-                        <!-- Cliente Selection for Credit -->
-                        <div v-if="tipoVenta === 'credito'" class="mt-6 border-t pt-4">
+                        <!-- Datos del cliente.
+                             Aparecen en un fiao, cuando el carrito lleva una
+                             sustancia controlada, o si el negocio pidió cédula
+                             en todo contado (Ajustes). -->
+                        <div v-if="requiereCliente" class="mt-6 border-t pt-4">
                             <div class="flex justify-between items-center mb-2">
-                                <h3 class="font-bold text-sm text-blue-800"><i class="fa-solid fa-user-tag mr-1"></i> Datos del Cliente (Fiao)</h3>
+                                <h3 class="font-bold text-sm text-blue-800"><i class="fa-solid fa-user-tag mr-1"></i> {{ tipoVenta === 'credito' ? 'Datos del Cliente (Fiao)' : 'Datos del Cliente' }}</h3>
                                 <span v-if="buscandoCliente" class="text-xs text-gray-500"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</span>
                                 <span v-else-if="clienteForm.encontrado" class="text-xs text-green-600 font-bold"><i class="fa-solid fa-check-circle"></i> Encontrado</span>
                                 <span v-else-if="clienteForm.cedula && !buscandoCliente" class="text-xs text-blue-500"><i class="fa-solid fa-plus-circle"></i> Nuevo</span>
                             </div>
-                            
+
+                            <p v-if="carritoControlado" class="text-xs text-red-700 font-semibold mb-2 bg-red-50 border border-red-200 rounded p-2">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                                Lleva sustancia controlada: la cédula y el nombre son obligatorios.
+                            </p>
+                            <p v-else-if="tipoVenta !== 'credito' && exigeCedulaContado" class="text-xs text-blue-700 font-semibold mb-2 bg-blue-50 border border-blue-200 rounded p-2">
+                                <i class="fa-solid fa-id-card mr-1"></i>
+                                El negocio pide cédula y nombre en toda venta de contado.
+                            </p>
+
                             <div class="space-y-2 bg-blue-50 p-2 rounded border border-blue-100">
                                 <div>
                                     <label class="text-xs text-gray-600 font-semibold">Cédula / NIT</label>
@@ -261,7 +279,7 @@
                                 </div>
                             </div>
                             
-                            <div class="space-y-2 mt-3 border-t pt-3 border-gray-200">
+                            <div v-if="tipoVenta === 'credito'" class="space-y-2 mt-3 border-t pt-3 border-gray-200">
                                 <div>
                                     <label class="text-xs text-gray-600 block">Abono Inicial</label>
                                     <input type="number" v-model.number="abonoInicial" class="w-full p-2 border rounded text-right bg-green-50">
@@ -597,6 +615,9 @@
                     </button>
                     <button @click="plataTab = 'cierre'; cargarCierre();" :class="plataTab === 'cierre' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
                         <i class="fa-solid fa-cash-register mr-1"></i> Cierre de caja
+                    </button>
+                    <button @click="plataTab = 'ventas'; cargarVentas();" :class="plataTab === 'ventas' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
+                        <i class="fa-solid fa-file-invoice-dollar mr-1"></i> Ventas
                     </button>
                 </div>
 
@@ -984,6 +1005,123 @@
                     </div>
                 </div>
 
+                <!-- ===================== VENTAS (FASE 4) ===================== -->
+                <div v-show="plataTab === 'ventas'">
+
+                    <!-- Filtros -->
+                    <div class="bg-white p-4 rounded-xl shadow mb-4 flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Desde</label>
+                            <input type="date" v-model="ventasFiltro.desde" @change="cargarVentas" class="border rounded-lg p-2">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Hasta</label>
+                            <input type="date" v-model="ventasFiltro.hasta" @change="cargarVentas" class="border rounded-lg p-2">
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Buscar</label>
+                            <input type="text" v-model="ventasFiltro.q" @keyup.enter="cargarVentas" placeholder="Cédula, cliente, vendedor o producto..." class="w-full border rounded-lg p-2">
+                        </div>
+                        <label class="flex items-center gap-2 pb-2.5 text-sm font-semibold text-gray-700">
+                            <input type="checkbox" v-model="ventasFiltro.controladas" @change="cargarVentas" class="w-5 h-5">
+                            Solo controladas
+                        </label>
+                        <button @click="cargarVentas" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-blue-700">
+                            <i class="fa-solid fa-magnifying-glass mr-1"></i> Buscar
+                        </button>
+                        <button @click="imprimirLibroControlados" class="bg-gray-800 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-900">
+                            <i class="fa-solid fa-book-medical mr-1"></i> Imprimir libro de controlados
+                        </button>
+                    </div>
+
+                    <!-- Resumen del periodo -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-white p-4 rounded-xl shadow">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Ventas</p>
+                            <p class="text-2xl font-bold text-blue-800">{{ ventasResumen.cantidad || 0 }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Vendido (sin anuladas)</p>
+                            <p class="text-2xl font-bold text-emerald-700">{{ formatMoney(ventasResumen.total || 0) }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Anuladas</p>
+                            <p class="text-2xl font-bold text-red-700">{{ ventasResumen.anuladas || 0 }}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow">
+                            <p class="text-xs font-bold text-gray-500 uppercase">Con controlados</p>
+                            <p class="text-2xl font-bold text-amber-700">{{ ventasResumen.controladas || 0 }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Lista -->
+                    <div class="bg-white rounded-xl shadow overflow-x-auto">
+                        <table class="w-full text-sm min-w-[820px]">
+                            <thead class="bg-gray-50 text-left text-gray-500">
+                                <tr>
+                                    <th class="p-3">Venta</th>
+                                    <th class="p-3">Fecha</th>
+                                    <th class="p-3">Cliente</th>
+                                    <th class="p-3">Qué se vendió</th>
+                                    <th class="p-3 text-right">Total</th>
+                                    <th class="p-3">Hecha por</th>
+                                    <th class="p-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="v in ventasLista" :key="v.id" :class="v.anulada == 1 ? 'bg-red-50' : 'hover:bg-gray-50'">
+                                    <td class="p-3 font-mono font-semibold" :class="v.anulada == 1 ? 'text-gray-400 line-through' : ''">#{{ v.id }}</td>
+                                    <td class="p-3 whitespace-nowrap">
+                                        {{ formatDate(v.fecha) }}
+                                        <div class="text-xs text-gray-400">{{ String(v.fecha).slice(11, 16) }}</div>
+                                    </td>
+                                    <td class="p-3">
+                                        <div v-if="v.cliente_nombre" class="font-semibold">{{ v.cliente_nombre }}</div>
+                                        <div v-if="v.cedula" class="text-xs text-gray-500">CC {{ v.cedula }}</div>
+                                        <div v-if="!v.cliente_nombre" class="text-xs text-gray-400">Sin cliente</div>
+                                    </td>
+                                    <td class="p-3 max-w-xs">
+                                        <div :class="v.anulada == 1 ? 'text-gray-400 line-through' : ''">{{ v.detalle }}</div>
+                                        <div class="mt-1 flex flex-wrap gap-1">
+                                            <span class="text-xs px-1.5 py-0.5 rounded" :class="v.tipo_venta === 'credito' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'">
+                                                {{ v.tipo_venta === 'credito' ? 'Fiao' : 'Contado' }} · {{ v.metodo_pago }}
+                                            </span>
+                                            <span v-if="v.lineas_controladas > 0" class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">controlado</span>
+                                        </div>
+                                        <div v-if="v.anulada == 1" class="text-xs text-red-700 mt-1">
+                                            <i class="fa-solid fa-ban mr-1"></i>Anulada por {{ v.anulada_por || '—' }}: {{ v.anulada_motivo }}
+                                        </div>
+                                    </td>
+                                    <td class="p-3 text-right font-bold whitespace-nowrap" :class="v.anulada == 1 ? 'text-gray-400 line-through' : ''">{{ formatMoney(v.total) }}</td>
+                                    <td class="p-3 text-xs text-gray-600">{{ v.vendedor || '—' }}</td>
+                                    <td class="p-3 text-right">
+                                        <button v-if="v.anulada != 1" @click="abrirAnularModal(v)" class="text-red-600 border border-red-200 rounded-lg px-3 py-2 font-semibold hover:bg-red-50 whitespace-nowrap">
+                                            <i class="fa-solid fa-ban mr-1"></i> Anular
+                                        </button>
+                                        <span v-else class="text-xs text-gray-400">Anulada</span>
+                                    </td>
+                                </tr>
+                                <tr v-if="cargandoVentas">
+                                    <td colspan="7" class="p-6 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando...</td>
+                                </tr>
+                                <tr v-else-if="ventasLista.length === 0">
+                                    <td colspan="7" class="p-6 text-center text-gray-400">No hay ventas en ese periodo</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="text-xs text-gray-500 mt-3">
+                        <i class="fa-solid fa-circle-info mr-1"></i>
+                        Anular devuelve el producto al inventario, pero no saca plata de la caja. Si el fiao ya tenía abonos
+                        o el día ya estaba cerrado, registre la devolución como gasto en <strong>Devoluciones</strong>.
+                    </p>
+                    <p v-if="ventasTruncada" class="text-xs text-amber-700 mt-2 font-semibold">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                        Se muestran las 300 ventas más recientes. Achique las fechas o use la búsqueda para ver las demás.
+                    </p>
+                </div>
+
             </div>
 
             <!-- MODAL: PAGO A PROVEEDOR -->
@@ -1236,6 +1374,36 @@
                         <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Cambiar</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- MODAL: ANULAR VENTA (FASE 4) -->
+        <div v-if="anularModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold mb-1 text-red-700"><i class="fa-solid fa-ban mr-1"></i> Anular venta #{{ anularModal.venta.id }}</h3>
+                <p class="text-sm text-gray-600 mb-3">
+                    {{ formatMoney(anularModal.venta.total) }} · {{ anularModal.venta.cliente_nombre || 'Sin cliente' }}
+                </p>
+
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg p-3 mb-3">
+                    <p class="font-bold mb-1">Tenga en cuenta:</p>
+                    <ul class="list-disc ml-5 space-y-1">
+                        <li>El producto vuelve al inventario.</li>
+                        <li>No se devuelve plata de la caja.</li>
+                        <li>No se puede anular un fiao con abonos ni un día ya cerrado.</li>
+                    </ul>
+                </div>
+
+                <label class="block text-sm font-bold mb-1">¿Por qué se anula?</label>
+                <input v-model="anularModal.motivo" type="text" maxlength="255" placeholder="Ej: se cobró dos veces" class="w-full p-3 border rounded-lg mb-4">
+
+                <div class="flex gap-3">
+                    <button @click="anularModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
+                    <button @click="confirmarAnulacion" :disabled="anulando || anularModal.motivo.trim().length < 5" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold hover:bg-red-700 disabled:opacity-50">
+                        <i class="fa-solid fa-spinner fa-spin mr-1" v-if="anulando"></i>
+                        Anular
+                    </button>
+                </div>
             </div>
         </div>
 

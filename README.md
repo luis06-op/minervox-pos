@@ -131,6 +131,7 @@ Abre `phpMyAdmin` (`http://localhost/phpmyadmin`) y crea una base de datos nueva
 3. `migracion_minervox_v3.sql` — descripción de productos e índices.
 4. `migracion_minervox_v4.sql` — cartera: tasa de mora por crédito y acuerdos de pago.
 5. `migracion_minervox_v5.sql` — usuarios: último acceso y bloqueo por intentos fallidos.
+6. `migracion_minervox_v6.sql` — controlados: cédula obligatoria, libro y anulación de ventas.
 
 > ⚠️ **Nunca** importes un archivo que empiece con `DROP DATABASE`: borraría los datos reales del negocio.
 
@@ -159,6 +160,7 @@ minervox-pos/
 ├── 📄 migracion_minervox_v3.sql  # Descripción de productos e índices
 ├── 📄 migracion_minervox_v4.sql  # Cartera: mora por crédito y acuerdos
 ├── 📄 migracion_minervox_v5.sql  # Usuarios: control de entrada
+├── 📄 migracion_minervox_v6.sql  # Controlados: cédula, libro y anulación
 ├── 📄 index.html        # Punto de entrada PWA
 └── 📄 README.md
 ```
@@ -173,8 +175,8 @@ minervox-pos/
 - [x] Dashboard de reportes y estadísticas de ventas ("Mi Plata")
 - [x] Cartera con semáforo, mora y acuerdos de pago
 - [x] Roles y permisos multiusuario
-- [ ] Sustancias controladas: exigir cédula al vender
-- [ ] Anulación de ventas
+- [x] Sustancias controladas: exigir cédula al vender y libro de controlados
+- [x] Anulación de ventas (con reversa de inventario y control de caja)
 - [ ] Notificaciones automáticas por WhatsApp API
 - [ ] Modo offline completo (Service Workers)
 
