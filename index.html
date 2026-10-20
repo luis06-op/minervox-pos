@@ -6,6 +6,30 @@
     <title>MINERVOX - Punto de Venta</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        /* Paleta de MINERVOX: el azul de la casa, ordenado de claro a profundo. */
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        blue: {
+                            50: '#eff5ff', 100: '#dbe8ff', 200: '#bcd2fb', 300: '#8fb2fa',
+                            400: '#5f8ff2', 500: '#3b74e8', 600: '#1d53c9', 700: '#17439f',
+                            800: '#143574', 900: '#0f2a57', 950: '#08192e'
+                        },
+                        ink: {
+                            600: '#143966', 700: '#0f2d4d', 800: '#0b2240', 900: '#07182b'
+                        },
+                        paper: '#f1f5fb'
+                    },
+                    fontFamily: {
+                        display: ['Bahnschrift', 'DIN Alternate', 'Franklin Gothic Medium', 'Segoe UI', 'sans-serif'],
+                        body: ['Segoe UI Variable Text', 'Segoe UI', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Vue.js 3 -->
@@ -13,150 +37,244 @@
     <!-- html2pdf -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- Custom Styles -->
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/styles.css?v=2">
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
+<body class="bg-paper text-slate-800 font-body h-screen flex overflow-hidden">
     <div id="app" class="w-full h-full">
 
         <!-- ================== PANTALLA DE ENTRADA (FASE 5) ================== -->
         <!-- Mientras el sistema no sepa quién entró, no muestra nada más.    -->
 
         <!-- 1. Abriendo: se está preguntando al servidor quién está adentro -->
-        <div v-if="sesion.cargando" class="w-full h-full flex flex-col items-center justify-center bg-blue-900 text-white">
-            <i class="fa-solid fa-spinner fa-spin text-4xl mb-4"></i>
-            <p class="text-lg font-semibold">Abriendo MINERVOX…</p>
+        <div v-if="sesion.cargando" class="w-full h-full flex flex-col items-center justify-center bg-ink-900 text-white mx-blueprint">
+            <div class="mx-logo mb-5" style="width:52px;height:52px;font-size:26px;">M</div>
+            <i class="fa-solid fa-spinner fa-spin text-xl mb-4 text-blue-300"></i>
+            <p class="font-display text-lg font-semibold tracking-wide">Abriendo MINERVOX…</p>
+            <p class="text-[11px] uppercase tracking-[.22em] text-blue-300/50 mt-2">Suministros mineros</p>
         </div>
 
         <!-- 2. Nadie adentro: entrar, o crear el administrador la primera vez -->
-        <div v-else-if="!sesion.autenticado" class="w-full h-full flex items-center justify-center bg-blue-900 p-4 overflow-y-auto">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 my-auto">
-                <div class="text-center mb-6">
-                    <h1 class="text-3xl font-bold text-blue-800 tracking-wider">MINERVOX</h1>
-                    <p class="text-sm text-gray-500 mt-1">Gestión &amp; Suministros Mineros</p>
+        <div v-else-if="!sesion.autenticado" class="w-full h-full flex overflow-y-auto" style="background:#07182b;">
+
+            <!-- Panel de marca: solo en pantallas anchas -->
+            <section class="hidden lg:flex lg:w-[46%] xl:w-[48%] relative flex-col justify-between p-12 xl:p-16 text-white mx-blueprint overflow-hidden"
+                     style="background: radial-gradient(900px 620px at 18% 0%, #15417a 0%, #0b2545 45%, #061527 100%);">
+                <div class="relative z-10 flex items-center gap-3">
+                    <div class="mx-logo" style="width:46px;height:46px;font-size:24px;">M</div>
+                    <div>
+                        <p class="font-display text-2xl font-bold tracking-[.15em] leading-none">MINERVOX</p>
+                        <p class="text-[9px] uppercase tracking-[.26em] text-blue-300/70 mt-1.5">Gestión &amp; Suministros Mineros</p>
+                    </div>
                 </div>
 
-                <!-- 2a. La base no tiene ningún usuario: se crea el dueño -->
-                <form v-if="sesion.necesita_primer_admin" @submit.prevent="crearPrimerAdmin" class="space-y-4">
-                    <h2 class="text-xl font-bold text-gray-800">Crear el administrador</h2>
-                    <p class="text-sm text-gray-500">
-                        Es la primera vez que se abre el sistema. Cree aquí el usuario del dueño.
-                        Después usted mismo crea los cajeros desde <strong>Usuarios</strong>.
+                <div class="relative z-10 max-w-md my-10">
+                    <p class="mx-eyebrow text-blue-300/80 mb-4">El Bagre · Bajo Cauca</p>
+                    <h2 class="font-display text-4xl xl:text-[3.4rem] font-bold leading-[1.02] mb-5">
+                        La tienda<br>en orden.<br><span class="text-blue-300">La plata clara.</span>
+                    </h2>
+                    <p class="text-blue-100/70 leading-relaxed text-[15px]">
+                        Ventas, fiaos, inventario y caja en un solo lugar.
+                        Sin cuadernos y sin perderle la pista a un peso.
                     </p>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-600 mb-1">Nombre y apellido</label>
-                        <input v-model="primerAdminForm.nombre" required type="text" placeholder="Ej: Luis Ángel Muñoz" class="w-full p-3 border rounded-lg text-lg">
+                    <div class="grid grid-cols-3 gap-3 mt-9">
+                        <div class="rounded-xl border border-white/10 bg-white/[.05] px-3 py-3">
+                            <p class="font-display text-lg font-bold text-blue-200">Fiao</p>
+                            <p class="text-[9px] uppercase tracking-[.12em] text-blue-200/55 mt-1">Con semáforo</p>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/[.05] px-3 py-3">
+                            <p class="font-display text-lg font-bold text-blue-200">Caja</p>
+                            <p class="text-[9px] uppercase tracking-[.12em] text-blue-200/55 mt-1">Cuadra sola</p>
+                        </div>
+                        <div class="rounded-xl border border-white/10 bg-white/[.05] px-3 py-3">
+                            <p class="font-display text-lg font-bold text-blue-200">Stock</p>
+                            <p class="text-[9px] uppercase tracking-[.12em] text-blue-200/55 mt-1">Al día</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-600 mb-1">Usuario para entrar</label>
-                        <input v-model="primerAdminForm.usuario" required type="text" placeholder="Ej: luis" class="w-full p-3 border rounded-lg text-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-600 mb-1">Contraseña</label>
-                        <input v-model="primerAdminForm.clave" required type="password" class="w-full p-3 border rounded-lg text-lg">
-                        <p class="text-xs text-gray-400 mt-1">Mínimo 8 caracteres. Apúntela bien: no se puede recuperar.</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-600 mb-1">Repetir la contraseña</label>
-                        <input v-model="primerAdminForm.clave2" required type="password" class="w-full p-3 border rounded-lg text-lg">
-                    </div>
-                    <p v-if="sesionError" class="text-red-700 text-sm bg-red-50 p-3 rounded-lg">
-                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ sesionError }}
-                    </p>
-                    <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 shadow">
-                        <i class="fa-solid fa-user-shield mr-2"></i> Crear y entrar
-                    </button>
-                </form>
+                </div>
 
-                <!-- 2b. Entrar normalmente -->
-                <form v-else @submit.prevent="entrar" class="space-y-4">
-                    <h2 class="text-xl font-bold text-gray-800">Entrar</h2>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-600 mb-1">Usuario</label>
-                        <input v-model="loginForm.usuario" required autofocus type="text" class="w-full p-3 border rounded-lg text-lg">
+                <p class="relative z-10 text-[11px] text-blue-200/40">
+                    Funciona en su computador · Los datos se quedan en su negocio
+                </p>
+            </section>
+
+            <!-- Formulario -->
+            <section class="flex-1 flex items-center justify-center p-4 sm:p-8">
+                <div class="w-full max-w-[26rem] mx-enter">
+
+                    <!-- Marca compacta para celular -->
+                    <div class="lg:hidden text-center mb-6">
+                        <div class="mx-logo mx-auto mb-3" style="width:48px;height:48px;font-size:25px;">M</div>
+                        <h1 class="font-display text-2xl font-bold tracking-[.15em] text-white">MINERVOX</h1>
+                        <p class="text-[9px] uppercase tracking-[.24em] text-blue-300/70 mt-1.5">Gestión &amp; Suministros Mineros</p>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-600 mb-1">Contraseña</label>
-                        <input v-model="loginForm.clave" required type="password" class="w-full p-3 border rounded-lg text-lg">
+
+                    <div class="mx-auth-card p-6 sm:p-8">
+                        <div class="mb-6">
+                            <p class="mx-eyebrow">Acceso</p>
+                            <h2 v-if="sesion.necesita_primer_admin" class="font-display text-2xl font-bold text-ink-800 mt-1.5">Primer arranque</h2>
+                            <h2 v-else class="font-display text-2xl font-bold text-ink-800 mt-1.5">Bienvenido de vuelta</h2>
+                            <p v-if="sesion.necesita_primer_admin" class="text-sm text-slate-500 mt-1">
+                                Cree el usuario del dueño. Después usted mismo crea los cajeros.
+                            </p>
+                            <p v-else class="text-sm text-slate-500 mt-1">Entre con su usuario para abrir la caja.</p>
+                        </div>
+
+                        <!-- 2a. La base no tiene ningún usuario: se crea el dueño -->
+                        <form v-if="sesion.necesita_primer_admin" @submit.prevent="crearPrimerAdmin" class="space-y-4">
+                            <div>
+                                <label class="mx-label">Nombre y apellido</label>
+                                <input v-model="primerAdminForm.nombre" required type="text" placeholder="Ej: Luis Ángel Muñoz" class="mx-input text-base">
+                            </div>
+                            <div>
+                                <label class="mx-label">Usuario para entrar</label>
+                                <input v-model="primerAdminForm.usuario" required type="text" placeholder="Ej: luis" class="mx-input text-base">
+                            </div>
+                            <div>
+                                <label class="mx-label">Contraseña</label>
+                                <input v-model="primerAdminForm.clave" required type="password" class="mx-input text-base">
+                                <p class="text-[11px] text-slate-400 mt-1.5">Mínimo 8 caracteres. Apúntela bien: no se puede recuperar.</p>
+                            </div>
+                            <div>
+                                <label class="mx-label">Repetir la contraseña</label>
+                                <input v-model="primerAdminForm.clave2" required type="password" class="mx-input text-base">
+                            </div>
+                            <p v-if="sesionError" class="text-red-700 text-sm bg-red-50 border border-red-200 p-3 rounded-lg">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ sesionError }}
+                            </p>
+                            <button type="submit" class="mx-btn mx-btn-primary w-full py-3.5 text-base">
+                                <i class="fa-solid fa-user-shield"></i> Crear y entrar
+                            </button>
+                        </form>
+
+                        <!-- 2b. Entrar normalmente -->
+                        <form v-else @submit.prevent="entrar" class="space-y-4">
+                            <div>
+                                <label class="mx-label">Usuario</label>
+                                <input v-model="loginForm.usuario" required autofocus type="text" class="mx-input text-base" autocomplete="username">
+                            </div>
+                            <div>
+                                <label class="mx-label">Contraseña</label>
+                                <input v-model="loginForm.clave" required type="password" class="mx-input text-base" autocomplete="current-password">
+                            </div>
+                            <p v-if="sesionError" class="text-red-700 text-sm bg-red-50 border border-red-200 p-3 rounded-lg">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ sesionError }}
+                            </p>
+                            <button type="submit" class="mx-btn mx-btn-primary w-full py-3.5 text-base">
+                                <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                            </button>
+                        </form>
                     </div>
-                    <p v-if="sesionError" class="text-red-700 text-sm bg-red-50 p-3 rounded-lg">
-                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ sesionError }}
+
+                    <p class="text-center text-[11px] text-blue-200/40 mt-4">
+                        <i class="fa-solid fa-lock mr-1"></i> Sus datos no salen de este computador
                     </p>
-                    <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-lg font-bold text-lg hover:bg-blue-700 shadow">
-                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Entrar
-                    </button>
-                </form>
-            </div>
+                </div>
+            </section>
         </div>
 
         <!-- 3. Ya hay sesión: el sistema de siempre -->
         <div v-else class="w-full h-full flex flex-col md:flex-row">
 
         <!-- Sidebar Navigation -->
-        <nav class="bg-blue-900 text-white w-full md:w-20 lg:w-64 flex flex-row md:flex-col justify-around md:justify-start items-center md:items-start py-4 md:px-4 md:py-6 shadow-xl z-20">
-            <!-- El título solo se muestra cuando el menú ya es ancho (lg).
-                 En la barra angosta (md, 768-1023 px) no cabe y se montaba
-                 encima del título de la pantalla. Ahí el menú es solo iconos. -->
-            <div class="hidden lg:block mb-8 text-center w-full">
-                <h1 class="text-2xl font-bold text-blue-300 tracking-wider">MINERVOX</h1>
-            </div>
-            
-            <button @click="currentView = 'pos'" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'pos'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
-                <i class="fa-solid fa-cash-register text-xl lg:mr-3"></i>
-                <span class="hidden lg:inline font-semibold">POS</span>
-            </button>
-            <button @click="currentView = 'cartera'; cargarCartera();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'cartera'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
-                <i class="fa-solid fa-wallet text-xl lg:mr-3"></i>
-                <span class="hidden lg:inline font-semibold">Cartera</span>
-            </button>
-            <!-- Mi Plata: el dueño ve todo el negocio. Al cajero solo le toca
-                 el cierre de caja, así que el botón cambia de nombre. -->
-            <button @click="abrirPlata()" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'plata'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
-                <i v-if="esAdmin" class="fa-solid fa-sack-dollar text-xl lg:mr-3"></i>
-                <i v-else class="fa-solid fa-cash-register text-xl lg:mr-3"></i>
-                <span class="hidden lg:inline font-semibold">{{ esAdmin ? 'Mi Plata' : 'Cierre de caja' }}</span>
-            </button>
-            <button @click="currentView = 'inventario'; loadProductos();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'inventario'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
-                <i class="fa-solid fa-boxes-stacked text-xl lg:mr-3"></i>
-                <span class="hidden lg:inline font-semibold">Inventario</span>
-            </button>
+        <nav class="mx-rail text-white w-full md:w-20 lg:w-[16.5rem] flex flex-row md:flex-col justify-around md:justify-start items-center md:items-stretch py-2.5 px-2 md:px-3 md:py-5 z-20 shrink-0">
 
-            <!-- Solo el administrador: usuarios y ajustes -->
-            <button v-if="esAdmin" @click="currentView = 'usuarios'; cargarUsuarios();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'usuarios'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none md:mb-2">
-                <i class="fa-solid fa-users text-xl lg:mr-3"></i>
-                <span class="hidden lg:inline font-semibold">Usuarios</span>
-            </button>
-            <button v-if="esAdmin" @click="currentView = 'config'; loadConfig();" :class="{'bg-blue-800 border-l-4 border-blue-400': currentView === 'config'}" class="w-full py-3 px-4 flex items-center justify-center lg:justify-start hover:bg-blue-800 transition rounded-lg md:rounded-none">
-                <i class="fa-solid fa-gear text-xl lg:mr-3"></i>
-                <span class="hidden lg:inline font-semibold">Ajustes</span>
-            </button>
+            <!-- Marca: icono en barra angosta, nombre completo en barra ancha -->
+            <div class="hidden md:flex items-center gap-2.5 lg:mb-8 md:mb-6 lg:px-2">
+                <div class="mx-logo">M</div>
+                <div class="hidden lg:block">
+                    <p class="font-display text-[17px] font-bold tracking-[.16em] leading-none">MINERVOX</p>
+                    <p class="text-[9px] uppercase tracking-[.2em] text-blue-300/60 mt-1">Suministros mineros</p>
+                </div>
+            </div>
+
+            <div class="flex flex-row md:flex-col items-center md:items-stretch justify-around md:justify-start w-full md:gap-1.5">
+                <button @click="currentView = 'pos'" :class="{'is-active': currentView === 'pos'}" class="mx-nav justify-center lg:justify-start">
+                    <span class="mx-nav-icon"><i class="fa-solid fa-cash-register"></i></span>
+                    <span class="hidden lg:flex flex-col leading-tight">
+                        <span class="text-[13.5px] font-semibold">POS</span>
+                        <span class="mx-nav-sub mt-0.5">Vender</span>
+                    </span>
+                </button>
+                <button @click="currentView = 'cartera'; cargarCartera();" :class="{'is-active': currentView === 'cartera'}" class="mx-nav justify-center lg:justify-start">
+                    <span class="mx-nav-icon"><i class="fa-solid fa-wallet"></i></span>
+                    <span class="hidden lg:flex flex-col leading-tight">
+                        <span class="text-[13.5px] font-semibold">Cartera</span>
+                        <span class="mx-nav-sub mt-0.5">Cobrar</span>
+                    </span>
+                </button>
+                <!-- Mi Plata: el dueño ve todo el negocio. Al cajero solo le toca
+                     el cierre de caja, así que el botón cambia de nombre. -->
+                <button @click="abrirPlata()" :class="{'is-active': currentView === 'plata'}" class="mx-nav justify-center lg:justify-start">
+                    <span class="mx-nav-icon">
+                        <i v-if="esAdmin" class="fa-solid fa-sack-dollar"></i>
+                        <i v-else class="fa-solid fa-cash-register"></i>
+                    </span>
+                    <span class="hidden lg:flex flex-col leading-tight">
+                        <span class="text-[13.5px] font-semibold">{{ esAdmin ? 'Mi Plata' : 'Cierre de caja' }}</span>
+                        <span class="mx-nav-sub mt-0.5">{{ esAdmin ? 'Contabilidad' : 'Cuadre del día' }}</span>
+                    </span>
+                </button>
+                <button @click="currentView = 'inventario'; loadProductos();" :class="{'is-active': currentView === 'inventario'}" class="mx-nav justify-center lg:justify-start">
+                    <span class="mx-nav-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+                    <span class="hidden lg:flex flex-col leading-tight">
+                        <span class="text-[13.5px] font-semibold">Inventario</span>
+                        <span class="mx-nav-sub mt-0.5">Existencias</span>
+                    </span>
+                </button>
+
+                <!-- Solo el administrador: usuarios y ajustes -->
+                <button v-if="esAdmin" @click="currentView = 'usuarios'; cargarUsuarios();" :class="{'is-active': currentView === 'usuarios'}" class="mx-nav justify-center lg:justify-start">
+                    <span class="mx-nav-icon"><i class="fa-solid fa-users"></i></span>
+                    <span class="hidden lg:flex flex-col leading-tight">
+                        <span class="text-[13.5px] font-semibold">Usuarios</span>
+                        <span class="mx-nav-sub mt-0.5">Permisos</span>
+                    </span>
+                </button>
+                <button v-if="esAdmin" @click="currentView = 'config'; loadConfig();" :class="{'is-active': currentView === 'config'}" class="mx-nav justify-center lg:justify-start">
+                    <span class="mx-nav-icon"><i class="fa-solid fa-gear"></i></span>
+                    <span class="hidden lg:flex flex-col leading-tight">
+                        <span class="text-[13.5px] font-semibold">Ajustes</span>
+                        <span class="mx-nav-sub mt-0.5">El negocio</span>
+                    </span>
+                </button>
+            </div>
 
             <!-- Quién está adentro (solo donde el menú es ancho) -->
-            <div class="hidden lg:block mt-auto pt-4 border-t border-blue-800 w-full">
-                <p class="text-sm font-bold text-blue-200 truncate" :title="sesion.usuario ? sesion.usuario.nombre : ''">{{ sesion.usuario ? sesion.usuario.nombre : '' }}</p>
-                <p class="text-xs text-blue-400 mb-2">
-                    <i class="fa-solid fa-circle text-[8px] mr-1" :class="esAdmin ? 'text-amber-400' : 'text-emerald-400'"></i>
-                    {{ esAdmin ? 'Administrador' : 'Cajero' }}
-                </p>
-                <button @click="claveForm.show = true" class="text-xs text-blue-300 hover:text-white block mb-1">
-                    <i class="fa-solid fa-key mr-1"></i> Cambiar mi contraseña
-                </button>
-                <button @click="salir()" class="text-xs text-blue-300 hover:text-white">
-                    <i class="fa-solid fa-right-from-bracket mr-1"></i> Salir
-                </button>
+            <div class="hidden lg:block mt-auto pt-4 border-t border-white/10 w-full">
+                <div class="flex items-center gap-2.5 px-1 mb-3">
+                    <div class="w-9 h-9 rounded-full shrink-0 grid place-items-center font-display font-bold text-sm text-white"
+                         style="background:linear-gradient(145deg,#3b82f6,#17439f);box-shadow:inset 0 1px 0 rgba(255,255,255,.3);">
+                        {{ sesion.usuario ? sesion.usuario.nombre.charAt(0).toUpperCase() : '?' }}
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[13px] font-semibold text-blue-100 truncate" :title="sesion.usuario ? sesion.usuario.nombre : ''">{{ sesion.usuario ? sesion.usuario.nombre : '' }}</p>
+                        <p class="text-[9.5px] uppercase tracking-[.12em] font-bold mt-0.5" :class="esAdmin ? 'text-amber-300/90' : 'text-emerald-300/90'">
+                            <i class="fa-solid fa-circle text-[5px] mr-1"></i>{{ esAdmin ? 'Administrador' : 'Cajero' }}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-1.5">
+                    <button @click="claveForm.show = true" class="mx-rail-btn" title="Cambiar mi contraseña">
+                        <i class="fa-solid fa-key"></i><span>Clave</span>
+                    </button>
+                    <button @click="salir()" class="mx-rail-btn" title="Salir">
+                        <i class="fa-solid fa-right-from-bracket"></i><span>Salir</span>
+                    </button>
+                </div>
             </div>
 
             <!-- En el celular el menú es solo iconos: salir aparte -->
-            <button @click="salir()" class="lg:hidden py-2 px-3 hover:bg-blue-800 rounded-lg" title="Salir">
-                <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            <button @click="salir()" class="lg:hidden py-2 px-2.5 text-blue-300 hover:text-white hover:bg-white/10 rounded-lg transition" title="Salir">
+                <i class="fa-solid fa-right-from-bracket text-lg"></i>
             </button>
         </nav>
 
         <!-- Main Content Area -->
-        <main class="flex-1 overflow-y-auto relative w-full h-full pb-20 md:pb-0">
+        <main class="flex-1 overflow-y-auto relative w-full h-full pb-20 md:pb-0 mx-canvas">
             
             <!-- Toast Notifications -->
-            <div v-if="toast.show" :class="toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'" class="absolute top-4 right-4 text-white px-6 py-3 rounded shadow-lg z-50 flex items-center transition-all duration-300">
-                <i :class="toast.type === 'error' ? 'fa-triangle-exclamation' : 'fa-check-circle'" class="fa-solid mr-2"></i>
+            <div v-if="toast.show" :class="toast.type === 'error' ? 'mx-toast-err' : 'mx-toast-ok'" class="mx-toast">
+                <i :class="toast.type === 'error' ? 'fa-triangle-exclamation' : 'fa-check-circle'" class="fa-solid"></i>
                 {{ toast.message }}
             </div>
 
@@ -166,74 +284,103 @@
                 <div class="flex-1 p-4 overflow-y-auto">
                     
                     <!-- Stock Alerts -->
-                    <div v-if="lowStockProducts.length > 0" class="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
-                        <p class="font-bold">¡Atención! Stock Crítico</p>
-                        <p>Los siguientes productos están por debajo del mínimo: 
-                            <span v-for="(p, i) in lowStockProducts" :key="p.id">
-                                {{ p.nombre }} ({{ p.stock }} {{ p.unidad }})<span v-if="i < lowStockProducts.length - 1">, </span>
-                            </span>
-                        </p>
-                    </div>
-
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">Catálogo</h2>
-                        <!-- Toggle Contado / Crédito -->
-                        <div class="flex items-center space-x-3 bg-white p-2 rounded-lg shadow-sm border">
-                            <span :class="{'font-bold text-blue-600': tipoVenta === 'contado'}" class="text-sm">CONTADO</span>
-                            <button @click="toggleTipoVenta" class="w-14 h-7 bg-gray-300 rounded-full relative transition-colors duration-300 focus:outline-none" :class="{'bg-blue-600': tipoVenta === 'credito'}">
-                                <span class="absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition-transform duration-300" :class="{'transform translate-x-7': tipoVenta === 'credito'}"></span>
-                            </button>
-                            <span :class="{'font-bold text-blue-600': tipoVenta === 'credito'}" class="text-sm">CRÉDITO</span>
+                    <div v-if="lowStockProducts.length > 0" class="mb-4 rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex items-start gap-3" role="alert">
+                        <div class="shrink-0 w-9 h-9 rounded-lg bg-amber-100 text-amber-700 grid place-items-center">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="font-bold text-amber-900 text-sm">Stock crítico</p>
+                            <p class="text-sm text-amber-800/80 mt-0.5">
+                                Por debajo del mínimo:
+                                <span v-for="(p, i) in lowStockProducts" :key="p.id">
+                                    <strong>{{ p.nombre }}</strong> ({{ p.stock }} {{ p.unidad }})<span v-if="i < lowStockProducts.length - 1">, </span>
+                                </span>
+                            </p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        <div v-for="prod in productos" :key="prod.id" @click="addToCart(prod)" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition flex flex-col justify-between h-40">
-                            <div>
-                                <h3 class="font-semibold text-gray-800 leading-tight">{{ prod.nombre }}</h3>
-                                <p class="text-xs text-gray-500 mt-1">Stock: <span :class="{'text-red-500 font-bold': parseFloat(prod.stock) <= parseFloat(prod.stock_minimo)}">{{ prod.stock }}</span> {{ prod.unidad }}</p>
-                                <span v-if="prod.controlado" class="inline-block mt-1 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded font-bold">
-                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>Controlado
+                    <div class="flex justify-between items-center mb-5 flex-wrap gap-3">
+                        <div>
+                            <p class="mx-eyebrow">Punto de venta</p>
+                            <h2 class="mx-h1 mt-1">Catálogo</h2>
+                        </div>
+                        <!-- Toggle Contado / Crédito -->
+                        <div class="flex items-center gap-3 bg-white px-3.5 py-2 rounded-xl border border-[#dce5f2] shadow-sm">
+                            <span :class="{'font-bold text-blue-700': tipoVenta === 'contado'}" class="text-[11px] tracking-wider font-semibold" :style="tipoVenta === 'contado' ? '' : 'color:#8595aa'">CONTADO</span>
+                            <button @click="toggleTipoVenta" class="w-14 h-7 rounded-full relative transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-300" :class="tipoVenta === 'credito' ? 'bg-blue-600' : 'bg-slate-300'">
+                                <span class="absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow transition-transform duration-300" :class="{'transform translate-x-7': tipoVenta === 'credito'}"></span>
+                            </button>
+                            <span :class="{'font-bold text-blue-700': tipoVenta === 'credito'}" class="text-[11px] tracking-wider font-semibold" :style="tipoVenta === 'credito' ? '' : 'color:#8595aa'">CRÉDITO</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+                        <div v-for="prod in productos" :key="prod.id" @click="addToCart(prod)"
+                             class="group relative mx-card mx-card-hover p-4 cursor-pointer flex flex-col justify-between overflow-hidden"
+                             :class="prod.controlado ? 'mx-hazard-edge' : ''">
+                            <div class="flex items-start justify-between gap-2">
+                                <h3 class="font-semibold text-[15px] leading-snug text-ink-800">{{ prod.nombre }}</h3>
+                                <span class="shrink-0 w-7 h-7 rounded-full grid place-items-center text-[11px] transition-transform group-hover:scale-110"
+                                      :class="parseFloat(prod.stock) <= parseFloat(prod.stock_minimo) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-700'">
+                                    <i class="fa-solid fa-plus"></i>
                                 </span>
                             </div>
-                            <div class="text-right mt-2">
-                                <span class="text-lg font-bold text-blue-600">
-                                    {{ formatMoney(tipoVenta === 'contado' ? prod.precio_contado : prod.precio_credito) }}
+                            <div v-if="prod.controlado" class="mt-2">
+                                <span class="mx-badge mx-badge-amber">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Controlado
                                 </span>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-dashed border-slate-200 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-1 sm:gap-2">
+                                <div class="min-w-0">
+                                    <p class="text-[9.5px] uppercase tracking-[.12em] font-bold text-slate-400">{{ tipoVenta === 'contado' ? 'Contado' : 'Crédito' }}</p>
+                                    <p class="font-num text-[18px] font-bold text-ink-800 leading-tight whitespace-nowrap">{{ formatMoney(tipoVenta === 'contado' ? prod.precio_contado : prod.precio_credito) }}</p>
+                                </div>
+                                <p class="text-[10px] font-semibold whitespace-nowrap sm:pb-0.5"
+                                   :class="parseFloat(prod.stock) <= parseFloat(prod.stock_minimo) ? 'text-red-600' : 'text-slate-400'">
+                                    <span class="font-num">{{ prod.stock }}</span> {{ prod.unidad }}
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Cart Panel -->
-                <div class="w-full md:w-96 bg-white border-l shadow-2xl flex flex-col h-full z-10" :class="{'fixed inset-0 top-auto h-[80vh]': isMobileCartOpen, 'hidden md:flex': !isMobileCartOpen}">
+                <div class="w-full md:w-[24.5rem] bg-white border-l border-[#dce5f2] shadow-2xl flex flex-col h-full z-10" :class="{'fixed inset-0 top-auto h-[80vh]': isMobileCartOpen, 'hidden md:flex': !isMobileCartOpen}">
                     
-                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                        <h2 class="text-xl font-bold">Resumen de Venta</h2>
-                        <button class="md:hidden text-gray-500" @click="isMobileCartOpen = false">
-                            <i class="fa-solid fa-times text-xl"></i>
+                    <div class="px-5 py-4 mx-bar flex justify-between items-center">
+                        <div>
+                            <p class="mx-eyebrow">Venta actual</p>
+                            <h2 class="font-display text-lg font-bold text-ink-800 mt-1">Resumen</h2>
+                        </div>
+                        <button class="md:hidden w-9 h-9 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 grid place-items-center transition" @click="isMobileCartOpen = false">
+                            <i class="fa-solid fa-times text-lg"></i>
                         </button>
                     </div>
 
                     <div class="flex-1 overflow-y-auto p-4">
-                        <div v-if="cart.length === 0" class="text-center text-gray-400 mt-10">
-                            <i class="fa-solid fa-cart-arrow-down text-4xl mb-2"></i>
-                            <p>Carrito vacío</p>
+                        <div v-if="cart.length === 0" class="text-center mt-14 px-6">
+                            <div class="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 mx-auto grid place-items-center text-slate-300 text-2xl mb-3">
+                                <i class="fa-solid fa-cart-arrow-down"></i>
+                            </div>
+                            <p class="font-semibold text-slate-500">Carrito vacío</p>
+                            <p class="text-xs text-slate-400 mt-1">Toque un producto del catálogo para empezar.</p>
                         </div>
                         
-                        <div v-for="(item, index) in cart" :key="index" class="mb-4 bg-gray-50 p-3 rounded border border-gray-200">
-                            <div class="flex justify-between items-start mb-2">
-                                <h4 class="font-semibold text-sm truncate pr-2">
+                        <div v-for="(item, index) in cart" :key="index" class="mb-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                            <div class="flex justify-between items-start gap-2 mb-2.5">
+                                <h4 class="font-semibold text-[13px] leading-snug text-ink-800">
                                     {{ item.nombre }}
-                                    <span v-if="item.controlado" class="ml-1 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">controlado</span>
+                                    <span v-if="item.controlado" class="ml-1 mx-badge mx-badge-amber">controlado</span>
                                 </h4>
-                                <button @click="removeFromCart(index)" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                <button @click="removeFromCart(index)" class="shrink-0 w-7 h-7 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 grid place-items-center transition" title="Quitar">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="number" v-model.number="item.cantidad" min="0.1" step="0.1" class="w-16 p-1 text-sm border rounded text-center">
-                                <span class="text-xs text-gray-500">x</span>
-                                <input type="number" v-model.number="item.precio_unitario" class="w-24 p-1 text-sm border rounded text-right">
-                                <span class="font-bold text-sm ml-auto text-blue-700">{{ formatMoney(item.cantidad * item.precio_unitario) }}</span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" v-model.number="item.cantidad" min="0.1" step="0.1" class="mx-input mx-qty">
+                                <span class="text-[11px] text-slate-400 font-bold">×</span>
+                                <input type="number" v-model.number="item.precio_unitario" class="mx-input mx-price">
+                                <span class="font-num font-bold text-[13px] ml-auto text-blue-800">{{ formatMoney(item.cantidad * item.precio_unitario) }}</span>
                             </div>
                         </div>
 
@@ -241,189 +388,204 @@
                              Aparecen en un fiao, cuando el carrito lleva una
                              sustancia controlada, o si el negocio pidió cédula
                              en todo contado (Ajustes). -->
-                        <div v-if="requiereCliente" class="mt-6 border-t pt-4">
-                            <div class="flex justify-between items-center mb-2">
-                                <h3 class="font-bold text-sm text-blue-800"><i class="fa-solid fa-user-tag mr-1"></i> {{ tipoVenta === 'credito' ? 'Datos del Cliente (Fiao)' : 'Datos del Cliente' }}</h3>
-                                <span v-if="buscandoCliente" class="text-xs text-gray-500"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</span>
-                                <span v-else-if="clienteForm.encontrado" class="text-xs text-green-600 font-bold"><i class="fa-solid fa-check-circle"></i> Encontrado</span>
-                                <span v-else-if="clienteForm.cedula && !buscandoCliente" class="text-xs text-blue-500"><i class="fa-solid fa-plus-circle"></i> Nuevo</span>
+                        <div v-if="requiereCliente" class="mt-5 border-t border-slate-200 pt-4">
+                            <div class="flex justify-between items-center mb-2.5">
+                                <h3 class="font-display font-bold text-[13px] text-ink-800"><i class="fa-solid fa-user-tag mr-1 text-blue-600"></i> {{ tipoVenta === 'credito' ? 'Datos del cliente (fiao)' : 'Datos del cliente' }}</h3>
+                                <span v-if="buscandoCliente" class="text-[11px] text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> Buscando…</span>
+                                <span v-else-if="clienteForm.encontrado" class="mx-badge mx-badge-green"><i class="fa-solid fa-check-circle"></i> Encontrado</span>
+                                <span v-else-if="clienteForm.cedula && !buscandoCliente" class="mx-badge mx-badge-blue"><i class="fa-solid fa-plus-circle"></i> Nuevo</span>
                             </div>
 
-                            <p v-if="carritoControlado" class="text-xs text-red-700 font-semibold mb-2 bg-red-50 border border-red-200 rounded p-2">
+                            <p v-if="carritoControlado" class="text-[11px] text-red-700 font-semibold mb-2 bg-red-50 border border-red-200 rounded-lg p-2.5">
                                 <i class="fa-solid fa-triangle-exclamation mr-1"></i>
                                 Lleva sustancia controlada: la cédula y el nombre son obligatorios.
                             </p>
-                            <p v-else-if="tipoVenta !== 'credito' && exigeCedulaContado" class="text-xs text-blue-700 font-semibold mb-2 bg-blue-50 border border-blue-200 rounded p-2">
+                            <p v-else-if="tipoVenta !== 'credito' && exigeCedulaContado" class="text-[11px] text-blue-800 font-semibold mb-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
                                 <i class="fa-solid fa-id-card mr-1"></i>
                                 El negocio pide cédula y nombre en toda venta de contado.
                             </p>
 
-                            <div class="space-y-2 bg-blue-50 p-2 rounded border border-blue-100">
+                            <div class="space-y-2.5 bg-blue-50/60 p-3 rounded-xl border border-blue-100">
                                 <div>
-                                    <label class="text-xs text-gray-600 font-semibold">Cédula / NIT</label>
-                                    <input type="text" v-model="clienteForm.cedula" @blur="buscarCliente" @keyup.enter="buscarCliente" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none" placeholder="Buscar cédula...">
+                                    <label class="mx-label">Cédula / NIT</label>
+                                    <input type="text" v-model="clienteForm.cedula" @blur="buscarCliente" @keyup.enter="buscarCliente" class="mx-input text-sm" placeholder="Buscar cédula…">
                                 </div>
                                 <div>
-                                    <label class="text-xs text-gray-600 font-semibold">Nombre Completo</label>
-                                    <input type="text" v-model="clienteForm.nombre" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                                    <label class="mx-label">Nombre completo</label>
+                                    <input type="text" v-model="clienteForm.nombre" class="mx-input text-sm">
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="grid grid-cols-2 gap-2.5">
                                     <div>
-                                        <label class="text-xs text-gray-600 font-semibold">Teléfono</label>
-                                        <input type="text" v-model="clienteForm.telefono" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                                        <label class="mx-label">Teléfono</label>
+                                        <input type="text" v-model="clienteForm.telefono" class="mx-input text-sm">
                                     </div>
                                     <div>
-                                        <label class="text-xs text-gray-600 font-semibold">Ubicación / Mina</label>
-                                        <input type="text" v-model="clienteForm.ubicacion" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                                        <label class="mx-label">Ubicación / mina</label>
+                                        <input type="text" v-model="clienteForm.ubicacion" class="mx-input text-sm">
                                     </div>
                                 </div>
                             </div>
                             
-                            <div v-if="tipoVenta === 'credito'" class="space-y-2 mt-3 border-t pt-3 border-gray-200">
+                            <div v-if="tipoVenta === 'credito'" class="space-y-2.5 mt-3 border-t border-slate-200 pt-3">
                                 <div>
-                                    <label class="text-xs text-gray-600 block">Abono Inicial</label>
-                                    <input type="number" v-model.number="abonoInicial" class="w-full p-2 border rounded text-right bg-green-50">
+                                    <label class="mx-label">Abono inicial</label>
+                                    <input type="number" v-model.number="abonoInicial" class="mx-input text-right bg-emerald-50/50" style="font-family:var(--mx-mono);font-weight:700;">
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="grid grid-cols-2 gap-2.5">
                                     <div>
-                                        <label class="text-xs text-gray-600 block">Días Plazo</label>
-                                        <select v-model="diasPlazoCredito" class="w-full p-2 border rounded">
+                                        <label class="mx-label">Días plazo</label>
+                                        <select v-model="diasPlazoCredito" class="mx-input">
                                             <option :value="config.plazo_1">{{ config.plazo_1 }} días</option>
                                             <option :value="config.plazo_2">{{ config.plazo_2 }} días</option>
-                                            <option value="custom">Otro...</option>
+                                            <option value="custom">Otro…</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="text-xs text-gray-600 block">Vencimiento</label>
-                                        <input type="date" v-model="fechaVencimiento" class="w-full p-2 border rounded text-sm bg-gray-100" readonly>
+                                        <label class="mx-label">Vencimiento</label>
+                                        <input type="date" v-model="fechaVencimiento" class="mx-input text-sm" readonly>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="p-4 bg-gray-50 border-t">
+                    <div class="p-4 mx-bar border-t border-b-0">
                         <div class="mb-3">
-                            <label class="block text-xs font-bold text-gray-500 mb-1">¿Cómo pagó?</label>
-                            <select v-model="metodoPago" class="w-full p-2 border rounded-lg">
+                            <label class="mx-label">¿Cómo pagó?</label>
+                            <select v-model="metodoPago" class="mx-input">
                                 <option value="efectivo">Efectivo (entra a la caja)</option>
                                 <option value="transferencia">Transferencia</option>
                                 <option value="otro">Otro</option>
                             </select>
                         </div>
-                        <div class="flex justify-between mb-4">
-                            <span class="text-lg font-bold">TOTAL</span>
-                            <span class="text-2xl font-bold text-green-600">{{ formatMoney(cartTotal) }}</span>
+                        <div class="flex justify-between items-end mb-3.5">
+                            <div>
+                                <p class="mx-label mb-0">Total a cobrar</p>
+                                <p class="text-[11px] text-slate-400 mt-1">{{ cart.length }} producto(s)</p>
+                            </div>
+                            <span class="font-num text-[28px] leading-none font-bold text-ink-800">{{ formatMoney(cartTotal) }}</span>
                         </div>
-                        <button @click="procesarVenta" :disabled="cart.length === 0 || processingVenta" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-700 disabled:opacity-50 transition shadow-lg">
-                            <i class="fa-solid fa-check mr-2" v-if="!processingVenta"></i>
-                            <i class="fa-solid fa-spinner fa-spin mr-2" v-else></i>
+                        <button @click="procesarVenta" :disabled="cart.length === 0 || processingVenta" class="mx-btn mx-btn-primary w-full py-4 text-[15px]">
+                            <i class="fa-solid fa-check" v-if="!processingVenta"></i>
+                            <i class="fa-solid fa-spinner fa-spin" v-else></i>
                             {{ tipoVenta === 'contado' ? 'COBRAR' : 'GENERAR PAGARÉ' }}
                         </button>
                     </div>
                 </div>
                 
                 <!-- Mobile Cart Toggle Button -->
-                <button v-show="!isMobileCartOpen" @click="isMobileCartOpen = true" class="md:hidden fixed bottom-24 right-4 bg-blue-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl z-10">
+                <button v-show="!isMobileCartOpen" @click="isMobileCartOpen = true" class="md:hidden fixed bottom-24 right-4 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-xl z-10"
+                        style="box-shadow:0 12px 28px -8px rgba(29,53,201,.7), inset 0 1px 0 rgba(255,255,255,.3);">
                     <i class="fa-solid fa-shopping-cart"></i>
-                    <span v-if="cart.length > 0" class="absolute top-0 right-0 bg-red-500 text-xs w-5 h-5 rounded-full flex items-center justify-center">{{ cart.length }}</span>
+                    <span v-if="cart.length > 0" class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">{{ cart.length }}</span>
                 </button>
             </div>
 
             <!-- VIEW: CARTERA -->
-            <div v-show="currentView === 'cartera'" class="p-6">
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-                    <h2 class="text-3xl font-bold text-gray-800">Cartera · Plata en la calle</h2>
-                    <button @click="imprimirCartera" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
-                        <i class="fa-solid fa-print mr-1"></i> Imprimir
+            <div v-show="currentView === 'cartera'" class="p-4 md:p-6">
+                <div class="flex justify-between items-end mb-5 flex-wrap gap-3">
+                    <div>
+                        <p class="mx-eyebrow">Cartera</p>
+                        <h2 class="mx-h1 mt-1">Plata en la calle</h2>
+                        <p class="mx-sub mt-1">Quién le debe, cuánto y desde cuándo.</p>
+                    </div>
+                    <button @click="imprimirCartera" class="mx-btn mx-btn-dark">
+                        <i class="fa-solid fa-print"></i> Imprimir cartera
                     </button>
                 </div>
 
                 <!-- Semáforo de cartera (toque una tarjeta para filtrar) -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    <div class="bg-white p-5 rounded-xl shadow border-l-4 border-blue-500">
-                        <p class="text-sm text-gray-500 font-semibold mb-1">Plata en la calle</p>
-                        <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(carteraResumen.total_cartera) }}</h3>
-                        <p class="text-xs text-gray-400 mt-1">{{ carteraResumen.num_fiaos }} fiao(s) sin cobrar</p>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4">
+                    <div class="mx-stat mx-stat-blue">
+                        <p class="mx-stat-label">Plata en la calle</p>
+                        <p class="mx-stat-value">{{ formatMoney(carteraResumen.total_cartera) }}</p>
+                        <p class="mx-stat-note">{{ carteraResumen.num_fiaos }} fiao(s) sin cobrar</p>
                     </div>
-                    <div @click="filtrarCartera('vencidos')" class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500 cursor-pointer hover:bg-red-50 transition">
-                        <p class="text-sm text-red-600 font-semibold mb-1"><i class="fa-solid fa-circle text-xs mr-1"></i> Vencido</p>
-                        <h3 class="text-2xl md:text-3xl font-bold text-red-700">{{ formatMoney(carteraResumen.vencido.monto) }}</h3>
-                        <p class="text-xs text-gray-500 mt-1">{{ carteraResumen.vencido.cantidad }} cliente(s) · mora {{ formatMoney(carteraResumen.vencido.mora) }}</p>
+                    <div @click="filtrarCartera('vencidos')" class="mx-stat mx-stat-red mx-stat-click">
+                        <p class="mx-stat-label"><i class="fa-solid fa-circle text-[6px] mr-1 text-red-600"></i> Vencido</p>
+                        <p class="mx-stat-value">{{ formatMoney(carteraResumen.vencido.monto) }}</p>
+                        <p class="mx-stat-note">{{ carteraResumen.vencido.cantidad }} cliente(s) · mora {{ formatMoney(carteraResumen.vencido.mora) }}</p>
                     </div>
-                    <div @click="filtrarCartera('por_vencer')" class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-400 cursor-pointer hover:bg-amber-50 transition">
-                        <p class="text-sm text-amber-600 font-semibold mb-1"><i class="fa-solid fa-circle text-xs mr-1"></i> Por vencer</p>
-                        <h3 class="text-2xl md:text-3xl font-bold text-amber-700">{{ formatMoney(carteraResumen.por_vencer.monto) }}</h3>
-                        <p class="text-xs text-gray-500 mt-1">{{ carteraResumen.por_vencer.cantidad }} cliente(s)</p>
+                    <div @click="filtrarCartera('por_vencer')" class="mx-stat mx-stat-amber mx-stat-click">
+                        <p class="mx-stat-label"><i class="fa-solid fa-circle text-[6px] mr-1 text-amber-500"></i> Por vencer</p>
+                        <p class="mx-stat-value">{{ formatMoney(carteraResumen.por_vencer.monto) }}</p>
+                        <p class="mx-stat-note">{{ carteraResumen.por_vencer.cantidad }} cliente(s)</p>
                     </div>
-                    <div @click="filtrarCartera('al_dia')" class="bg-white p-5 rounded-xl shadow border-l-4 border-green-500 cursor-pointer hover:bg-green-50 transition">
-                        <p class="text-sm text-green-600 font-semibold mb-1"><i class="fa-solid fa-circle text-xs mr-1"></i> Al día</p>
-                        <h3 class="text-2xl md:text-3xl font-bold text-green-700">{{ formatMoney(carteraResumen.al_dia.monto) }}</h3>
-                        <p class="text-xs text-gray-500 mt-1">{{ carteraResumen.al_dia.cantidad }} cliente(s)</p>
+                    <div @click="filtrarCartera('al_dia')" class="mx-stat mx-stat-green mx-stat-click">
+                        <p class="mx-stat-label"><i class="fa-solid fa-circle text-[6px] mr-1 text-emerald-600"></i> Al día</p>
+                        <p class="mx-stat-value">{{ formatMoney(carteraResumen.al_dia.monto) }}</p>
+                        <p class="mx-stat-note">{{ carteraResumen.al_dia.cantidad }} cliente(s)</p>
                     </div>
                 </div>
 
-                <p class="text-sm text-gray-500 mb-4">
-                    Recuperado este mes: <strong class="text-green-700">{{ formatMoney(carteraResumen.recuperado_mes) }}</strong>
-                    <span class="mx-2">·</span>
-                    Mora acumulada: <strong class="text-red-700">{{ formatMoney(carteraResumen.mora_total) }}</strong>
-                    <span class="mx-2">·</span>
-                    Se pone amarillo a los <strong>{{ carteraResumen.dias_alerta }}</strong> días del vencimiento y cobra <strong>{{ carteraResumen.mora_mensual }}%</strong> de mora al mes.
-                </p>
+                <div class="mx-card px-4 py-3 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate-600">
+                    <span>Recuperado este mes: <strong class="font-num text-emerald-700">{{ formatMoney(carteraResumen.recuperado_mes) }}</strong></span>
+                    <span class="text-slate-300 hidden sm:inline">|</span>
+                    <span>Mora acumulada: <strong class="font-num text-red-700">{{ formatMoney(carteraResumen.mora_total) }}</strong></span>
+                    <span class="text-slate-300 hidden sm:inline">|</span>
+                    <span class="text-slate-500">Se pone amarillo a los <strong class="text-slate-700">{{ carteraResumen.dias_alerta }}</strong> días del vencimiento y cobra <strong class="text-slate-700">{{ carteraResumen.mora_mensual }}%</strong> de mora al mes.</span>
+                </div>
 
                 <!-- Filtros y buscador -->
                 <div class="flex flex-wrap gap-2 mb-4">
-                    <button @click="filtrarCartera('todos')" :class="filtroCartera === 'todos' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Todos</button>
-                    <button @click="filtrarCartera('vencidos')" :class="filtroCartera === 'vencidos' ? 'bg-red-600 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Vencidos</button>
-                    <button @click="filtrarCartera('por_vencer')" :class="filtroCartera === 'por_vencer' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Por vencer</button>
-                    <button @click="filtrarCartera('al_dia')" :class="filtroCartera === 'al_dia' ? 'bg-green-600 text-white' : 'bg-white text-gray-700'" class="px-4 py-2 rounded-lg shadow font-semibold">Al día</button>
-                    <input v-model="buscarCartera" @input="cargarDeudores" type="text" placeholder="Buscar por nombre o cédula…" class="border rounded-lg px-4 py-2 flex-1 min-w-[200px]">
+                    <button @click="filtrarCartera('todos')" :class="{'is-active': filtroCartera === 'todos'}" class="mx-tab">Todos</button>
+                    <button @click="filtrarCartera('vencidos')" :class="{'is-active': filtroCartera === 'vencidos'}" class="mx-tab mx-tab-red">Vencidos</button>
+                    <button @click="filtrarCartera('por_vencer')" :class="{'is-active': filtroCartera === 'por_vencer'}" class="mx-tab mx-tab-amber">Por vencer</button>
+                    <button @click="filtrarCartera('al_dia')" :class="{'is-active': filtroCartera === 'al_dia'}" class="mx-tab mx-tab-green">Al día</button>
+                    <input v-model="buscarCartera" @input="cargarDeudores" type="text" placeholder="Buscar por nombre o cédula…" class="mx-input flex-1 min-w-[200px]">
                 </div>
 
-                <div class="bg-white rounded-xl shadow overflow-hidden">
-                    <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-                        <h3 class="text-lg font-bold">Los fiaos</h3>
-                        <button @click="cargarDeudores" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-rotate-right"></i></button>
+                <div class="mx-card overflow-hidden">
+                    <div class="px-4 py-3 mx-bar flex justify-between items-center">
+                        <div>
+                            <h3 class="mx-h2">Los fiaos</h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">{{ deudoresActivos.length }} en pantalla</p>
+                        </div>
+                        <button @click="cargarDeudores" class="w-8 h-8 rounded-lg text-blue-700 hover:bg-blue-50 grid place-items-center transition" title="Actualizar">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full min-w-[920px] text-left border-collapse">
+                        <table class="mx-table min-w-[920px]">
                             <thead>
-                                <tr class="bg-gray-100 text-gray-600 text-sm">
-                                    <th class="p-3 text-center">Semáforo</th>
-                                    <th class="p-3">Cliente</th>
-                                    <th class="p-3">Vence</th>
-                                    <th class="p-3 text-right">Mora</th>
-                                    <th class="p-3 text-right">Saldo</th>
-                                    <th class="p-3 text-right">Total a pagar</th>
-                                    <th class="p-3 text-center">Acciones</th>
+                                <tr>
+                                    <th class="text-center">Semáforo</th>
+                                    <th>Cliente</th>
+                                    <th>Vence</th>
+                                    <th class="text-right">Mora</th>
+                                    <th class="text-right">Saldo</th>
+                                    <th class="text-right">Total a pagar</th>
+                                    <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="d in deudoresActivos" :key="d.credito_id" class="border-b hover:bg-gray-50">
+                                <tr v-for="d in deudoresActivos" :key="d.credito_id">
                                     <td class="p-3 text-center">
                                         <span class="inline-block w-5 h-5 rounded-full" :class="colorSemaforo(d.semaforo)"></span>
                                     </td>
                                     <td class="p-3">
                                         <p class="font-bold whitespace-nowrap">{{ d.cliente_nombre }}</p>
-                                        <p class="text-xs text-gray-500">C.C. {{ d.cliente_cedula }}<span v-if="d.cliente_telefono"> · <i class="fa-solid fa-phone"></i> {{ d.cliente_telefono }}</span></p>
+                                        <p class="text-xs text-slate-500">C.C. {{ d.cliente_cedula }}<span v-if="d.cliente_telefono"> · <i class="fa-solid fa-phone"></i> {{ d.cliente_telefono }}</span></p>
                                         <p v-if="d.num_acuerdos > 0" class="text-xs text-blue-600 font-semibold mt-1"><i class="fa-solid fa-handshake"></i> Tiene acuerdo de pago</p>
                                     </td>
                                     <td class="p-3 text-sm whitespace-nowrap">
                                         <p class="font-semibold" :class="d.semaforo === 'rojo' ? 'text-red-600' : ''">{{ formatDate(d.fecha_vencimiento) }}</p>
                                         <p class="text-xs" :class="textoVencimiento(d).clase">{{ textoVencimiento(d).texto }}</p>
                                     </td>
-                                    <td class="p-3 text-right text-sm" :class="d.mora > 0 ? 'text-red-600 font-bold' : 'text-gray-400'">{{ formatMoney(d.mora) }}</td>
+                                    <td class="p-3 text-right text-sm" :class="d.mora > 0 ? 'text-red-600 font-bold' : 'text-slate-400'">{{ formatMoney(d.mora) }}</td>
                                     <td class="p-3 text-right font-bold whitespace-nowrap">{{ formatMoney(d.saldo_pendiente) }}</td>
                                     <td class="p-3 text-right font-bold text-blue-700 whitespace-nowrap">{{ formatMoney(d.total_a_pagar) }}</td>
-                                    <td class="p-3 text-center whitespace-nowrap">
-                                        <button @click="openAbonoModal(d)" class="bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200" title="Abonar"><i class="fa-solid fa-money-bill-wave"></i></button>
-                                        <button @click="openAcuerdoModal(d)" class="bg-blue-100 text-blue-700 px-3 py-2 rounded hover:bg-blue-200" title="Acuerdo de pago"><i class="fa-solid fa-handshake"></i></button>
-                                        <button @click="abrirEstadoCuenta(d)" class="bg-gray-100 text-gray-700 px-3 py-2 rounded hover:bg-gray-200" title="Estado de cuenta"><i class="fa-solid fa-file-lines"></i></button>
-                                        <button @click="sendWhatsApp(d)" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600" title="Recordatorio WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+                                    <td class="text-center whitespace-nowrap">
+                                        <div class="inline-flex gap-1.5">
+                                            <button @click="openAbonoModal(d)" class="mx-iconbtn mx-iconbtn-green" title="Abonar"><i class="fa-solid fa-money-bill-wave"></i></button>
+                                            <button @click="openAcuerdoModal(d)" class="mx-iconbtn mx-iconbtn-blue" title="Acuerdo de pago"><i class="fa-solid fa-handshake"></i></button>
+                                            <button @click="abrirEstadoCuenta(d)" class="mx-iconbtn mx-iconbtn-grey" title="Estado de cuenta"><i class="fa-solid fa-file-lines"></i></button>
+                                            <button @click="sendWhatsApp(d)" class="mx-iconbtn mx-iconbtn-wa" title="Recordatorio WhatsApp"><i class="fa-brands fa-whatsapp"></i></button>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr v-if="deudoresActivos.length === 0">
-                                    <td colspan="7" class="p-6 text-center text-gray-500">No hay fiaos que mostrar con este filtro.</td>
+                                    <td colspan="7" class="p-6 text-center text-slate-500">No hay fiaos que mostrar con este filtro.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -432,42 +594,48 @@
             </div>
 
             <!-- VIEW: INVENTARIO -->
-            <div v-show="currentView === 'inventario'" class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-3xl font-bold text-gray-800">Inventario</h2>
-                    <button v-if="esAdmin" @click="openProductModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
-                        <i class="fa-solid fa-plus mr-1"></i> Nuevo Producto
+            <div v-show="currentView === 'inventario'" class="p-4 md:p-6">
+                <div class="flex justify-between items-end mb-5 flex-wrap gap-3">
+                    <div>
+                        <p class="mx-eyebrow">Existencias</p>
+                        <h2 class="mx-h1 mt-1">Inventario</h2>
+                        <p class="mx-sub mt-1">Qué hay, cuánto vale y qué se está acabando.</p>
+                    </div>
+                    <button v-if="esAdmin" @click="openProductModal()" class="mx-btn mx-btn-primary">
+                        <i class="fa-solid fa-plus"></i> Nuevo producto
                     </button>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow overflow-hidden overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-max">
+                <div class="mx-card overflow-hidden overflow-x-auto">
+                    <table class="mx-table min-w-max">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-600 text-sm">
-                                <th class="p-3">Nombre</th>
-                                <th class="p-3">Unidad</th>
-                                <th v-if="esAdmin" class="p-3 text-right">P. Costo</th>
-                                <th class="p-3 text-right">P. Contado</th>
-                                <th class="p-3 text-right">P. Crédito</th>
-                                <th class="p-3 text-center">Stock</th>
-                                <th v-if="esAdmin" class="p-3 text-center">Acciones</th>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Unidad</th>
+                                <th v-if="esAdmin" class="text-right">P. Costo</th>
+                                <th class="text-right">P. Contado</th>
+                                <th class="text-right">P. Crédito</th>
+                                <th class="text-center">Stock</th>
+                                <th v-if="esAdmin" class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="p in productos" :key="p.id" class="border-b hover:bg-gray-50">
-                                <td class="p-3 font-medium">{{ p.nombre }}</td>
-                                <td class="p-3 text-sm text-gray-500">{{ p.unidad }}</td>
-                                <td v-if="esAdmin" class="p-3 text-right">{{ formatMoney(p.precio_costo) }}</td>
-                                <td class="p-3 text-right text-blue-600 font-bold">{{ formatMoney(p.precio_contado) }}</td>
-                                <td class="p-3 text-right text-purple-600 font-bold">{{ formatMoney(p.precio_credito) }}</td>
-                                <td class="p-3 text-center">
-                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="parseFloat(p.stock) <= parseFloat(p.stock_minimo) ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'">
+                            <tr v-for="p in productos" :key="p.id">
+                                <td class="font-medium">{{ p.nombre }}</td>
+                                <td class="text-sm text-slate-500">{{ p.unidad }}</td>
+                                <td v-if="esAdmin" class="text-right font-num">{{ formatMoney(p.precio_costo) }}</td>
+                                <td class="text-right font-num font-bold text-blue-700">{{ formatMoney(p.precio_contado) }}</td>
+                                <td class="text-right font-num font-bold text-purple-700">{{ formatMoney(p.precio_credito) }}</td>
+                                <td class="text-center">
+                                    <span class="mx-badge" :class="parseFloat(p.stock) <= parseFloat(p.stock_minimo) ? 'mx-badge-red' : 'mx-badge-green'">
                                         {{ p.stock }}
                                     </span>
                                 </td>
-                                <td v-if="esAdmin" class="p-3 text-center space-x-2">
-                                    <button @click="openProductModal(p)" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
-                                    <button @click="deleteProduct(p.id)" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                <td v-if="esAdmin" class="text-center">
+                                    <div class="inline-flex gap-1.5">
+                                        <button @click="openProductModal(p)" class="mx-iconbtn mx-iconbtn-blue" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                                        <button @click="deleteProduct(p.id)" class="mx-iconbtn mx-iconbtn-red" title="Borrar"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -476,108 +644,115 @@
             </div>
 
             <!-- VIEW: USUARIOS (FASE 5 · solo el administrador) -->
-            <div v-show="currentView === 'usuarios'" class="p-6">
-                <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+            <div v-show="currentView === 'usuarios'" class="p-4 md:p-6">
+                <div class="flex justify-between items-end mb-5 flex-wrap gap-3">
                     <div>
-                        <h2 class="text-3xl font-bold text-gray-800">Usuarios</h2>
-                        <p class="text-sm text-gray-500">Quién puede entrar al sistema y qué puede hacer.</p>
+                        <p class="mx-eyebrow">Accesos</p>
+                        <h2 class="mx-h1 mt-1">Usuarios</h2>
+                        <p class="mx-sub mt-1">Quién puede entrar al sistema y qué puede hacer.</p>
                     </div>
-                    <button @click="openUsuarioModal()" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
-                        <i class="fa-solid fa-user-plus mr-1"></i> Nuevo usuario
+                    <button @click="openUsuarioModal()" class="mx-btn mx-btn-primary">
+                        <i class="fa-solid fa-user-plus"></i> Nuevo usuario
                     </button>
                 </div>
 
-                <div class="bg-blue-50 border-l-4 border-blue-400 text-blue-900 p-4 rounded mb-6 text-sm space-y-1">
+                <div class="rounded-xl border border-blue-100 bg-blue-50/60 text-blue-900 p-4 mb-5 text-[13px] space-y-1.5">
                     <p><strong>Administrador:</strong> ve todo (Mi Plata, costos, gastos, compras, ajustes) y maneja los usuarios.</p>
                     <p><strong>Cajero:</strong> vende, cobra cartera, registra clientes, consulta el inventario (sin costos) y cierra la caja.</p>
                 </div>
 
-                <div class="bg-white rounded-xl shadow overflow-hidden overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-max">
+                <div class="mx-card overflow-hidden overflow-x-auto">
+                    <table class="mx-table min-w-max">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-600 text-sm">
-                                <th class="p-3">Nombre</th>
-                                <th class="p-3">Usuario</th>
-                                <th class="p-3">Rol</th>
-                                <th class="p-3 text-center">Estado</th>
-                                <th class="p-3 text-center">Última entrada</th>
-                                <th class="p-3 text-center">Acciones</th>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Última entrada</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="u in usuarios" :key="u.id" class="border-b hover:bg-gray-50">
-                                <td class="p-3 font-medium">{{ u.nombre }}</td>
-                                <td class="p-3 text-gray-500">{{ u.usuario }}</td>
-                                <td class="p-3">
-                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="u.rol === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'">
+                            <tr v-for="u in usuarios" :key="u.id">
+                                <td class="font-medium">{{ u.nombre }}</td>
+                                <td class="text-slate-500 font-num text-[13px]">{{ u.usuario }}</td>
+                                <td>
+                                    <span class="mx-badge" :class="u.rol === 'admin' ? 'mx-badge-amber' : 'mx-badge-green'">
                                         {{ u.rol === 'admin' ? 'Administrador' : 'Cajero' }}
                                     </span>
                                 </td>
-                                <td class="p-3 text-center">
-                                    <span class="px-2 py-1 rounded text-xs font-bold" :class="Number(u.activo) === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'">
+                                <td class="text-center">
+                                    <span class="mx-badge" :class="Number(u.activo) === 1 ? 'mx-badge-green' : 'mx-badge-grey'">
                                         {{ Number(u.activo) === 1 ? 'Activo' : 'Desactivado' }}
                                     </span>
                                 </td>
-                                <td class="p-3 text-center text-sm text-gray-500">{{ u.ultimo_acceso ? formatDate(u.ultimo_acceso) : 'nunca' }}</td>
-                                <td class="p-3 text-center space-x-2">
-                                    <button @click="openUsuarioModal(u)" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                                    <button v-if="Number(u.activo) === 1" @click="desactivarUsuario(u)" class="text-red-500 hover:text-red-700" title="Desactivar"><i class="fa-solid fa-user-slash"></i></button>
+                                <td class="text-center text-sm text-slate-500">{{ u.ultimo_acceso ? formatDate(u.ultimo_acceso) : 'nunca' }}</td>
+                                <td class="text-center">
+                                    <div class="inline-flex gap-1.5">
+                                        <button @click="openUsuarioModal(u)" class="mx-iconbtn mx-iconbtn-blue" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                                        <button v-if="Number(u.activo) === 1" @click="desactivarUsuario(u)" class="mx-iconbtn mx-iconbtn-red" title="Desactivar"><i class="fa-solid fa-user-slash"></i></button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <p class="text-xs text-gray-500 mt-4">
+                <p class="text-xs text-slate-500 mt-4">
                     Un usuario que se va no se borra: se <strong>desactiva</strong>. Así las ventas, abonos y cierres
                     que hizo conservan su nombre y el arqueo de esos días se entiende.
                 </p>
             </div>
 
             <!-- VIEW: CONFIG -->
-            <div v-show="currentView === 'config'" class="p-6 max-w-4xl mx-auto">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Ajustes del Sistema</h2>
+            <div v-show="currentView === 'config'" class="p-4 md:p-6 max-w-4xl mx-auto">
+                <div class="mb-5">
+                    <p class="mx-eyebrow">El negocio</p>
+                    <h2 class="mx-h1 mt-1">Configuración</h2>
+                    <p class="mx-sub mt-1">Los datos que salen en el pagaré, el recibo y los recordatorios.</p>
+                </div>
                 
-                <form @submit.prevent="saveConfig" class="space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow">
-                        <h3 class="text-xl font-bold mb-4 border-b pb-2">Datos del Negocio</h3>
+                <form @submit.prevent="saveConfig" class="space-y-5">
+                    <div class="mx-card p-5 md:p-6">
+                        <h3 class="mx-h2 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2"><span class="w-1 h-4 rounded-full bg-blue-600"></span>Datos del negocio</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div><label class="block text-sm mb-1">Nombre Comercial</label><input v-model="config.nombre_comercial" type="text" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm mb-1">Razón Social</label><input v-model="config.razon_social" type="text" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm mb-1">NIT / Cédula</label><input v-model="config.nit" type="text" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm mb-1">Teléfonos</label><input v-model="config.telefonos" type="text" class="w-full p-2 border rounded"></div>
-                            <div class="md:col-span-2"><label class="block text-sm mb-1">Dirección</label><input v-model="config.direccion" type="text" class="w-full p-2 border rounded"></div>
+                            <div><label class="mx-label">Nombre Comercial</label><input v-model="config.nombre_comercial" type="text" class="mx-input"></div>
+                            <div><label class="mx-label">Razón Social</label><input v-model="config.razon_social" type="text" class="mx-input"></div>
+                            <div><label class="mx-label">NIT / Cédula</label><input v-model="config.nit" type="text" class="mx-input"></div>
+                            <div><label class="mx-label">Teléfonos</label><input v-model="config.telefonos" type="text" class="mx-input"></div>
+                            <div class="md:col-span-2"><label class="mx-label">Dirección</label><input v-model="config.direccion" type="text" class="mx-input"></div>
                         </div>
                     </div>
                     
-                    <div class="bg-white p-6 rounded-xl shadow">
-                        <h3 class="text-xl font-bold mb-4 border-b pb-2">Parámetros de Crédito</h3>
+                    <div class="mx-card p-5 md:p-6">
+                        <h3 class="mx-h2 mb-4 pb-3 border-b border-slate-100 flex items-center gap-2"><span class="w-1 h-4 rounded-full bg-blue-600"></span>Parámetros de crédito</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div><label class="block text-sm mb-1">Plazo 1 (días)</label><input v-model.number="config.plazo_1" type="number" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm mb-1">Plazo 2 (días)</label><input v-model.number="config.plazo_2" type="number" class="w-full p-2 border rounded"></div>
+                            <div><label class="mx-label">Plazo 1 (días)</label><input v-model.number="config.plazo_1" type="number" class="mx-input"></div>
+                            <div><label class="mx-label">Plazo 2 (días)</label><input v-model.number="config.plazo_2" type="number" class="mx-input"></div>
                             <div>
-                                <label class="block text-sm mb-1">Días para la alerta amarilla</label>
-                                <input v-model.number="config.dias_alerta" type="number" min="0" class="w-full p-2 border rounded">
-                                <p class="text-xs text-gray-500 mt-1">El semáforo se pone amarillo cuando faltan estos días o menos.</p>
+                                <label class="mx-label">Días para la alerta amarilla</label>
+                                <input v-model.number="config.dias_alerta" type="number" min="0" class="mx-input">
+                                <p class="text-xs text-slate-500 mt-1">El semáforo se pone amarillo cuando faltan estos días o menos.</p>
                             </div>
                             <div>
-                                <label class="block text-sm mb-1">Interés de mora mensual (%)</label>
-                                <input v-model.number="config.mora_mensual" type="number" step="0.1" min="0" class="w-full p-2 border rounded">
-                                <p class="text-xs text-gray-500 mt-1">Se cobra por días sobre el saldo vencido.</p>
+                                <label class="mx-label">Interés de mora mensual (%)</label>
+                                <input v-model.number="config.mora_mensual" type="number" step="0.1" min="0" class="mx-input">
+                                <p class="text-xs text-slate-500 mt-1">Se cobra por días sobre el saldo vencido.</p>
                             </div>
                             <div>
-                                <label class="block text-sm mb-1">Recargo por vender a crédito (%)</label>
-                                <input v-model.number="config.recargo_credito" type="number" step="0.1" min="0" class="w-full p-2 border rounded">
-                                <p class="text-xs text-gray-500 mt-1">Es el sobreprecio del fiao, no la mora.</p>
+                                <label class="mx-label">Recargo por vender a crédito (%)</label>
+                                <input v-model.number="config.recargo_credito" type="number" step="0.1" min="0" class="mx-input">
+                                <p class="text-xs text-slate-500 mt-1">Es el sobreprecio del fiao, no la mora.</p>
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block text-sm mb-1">Texto Legal Pagaré</label>
-                                <textarea v-model="config.texto_pagare" rows="3" class="w-full p-2 border rounded text-sm"></textarea>
+                                <label class="mx-label">Texto Legal Pagaré</label>
+                                <textarea v-model="config.texto_pagare" rows="3" class="mx-input text-sm"></textarea>
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block text-sm mb-1">Mensaje de WhatsApp para cobrar los fiaos</label>
-                                <textarea v-model="config.plantilla_whatsapp" rows="2" placeholder="Hola {nombre}, le saludamos de {negocio}. Le recordamos su saldo de {saldo} con vencimiento el {fecha}." class="w-full p-2 border rounded text-sm"></textarea>
-                                <p class="text-xs text-gray-500 mt-1">Puede usar <strong>{nombre}</strong> (el cliente), <strong>{negocio}</strong>, <strong>{saldo}</strong>, <strong>{mora}</strong> y <strong>{fecha}</strong>: MINERVOX los reemplaza solos.</p>
+                                <label class="mx-label">Mensaje de WhatsApp para cobrar los fiaos</label>
+                                <textarea v-model="config.plantilla_whatsapp" rows="2" placeholder="Hola {nombre}, le saludamos de {negocio}. Le recordamos su saldo de {saldo} con vencimiento el {fecha}." class="mx-input text-sm"></textarea>
+                                <p class="text-xs text-slate-500 mt-1">Puede usar <strong>{nombre}</strong> (el cliente), <strong>{negocio}</strong>, <strong>{saldo}</strong>, <strong>{mora}</strong> y <strong>{fecha}</strong>: MINERVOX los reemplaza solos.</p>
                             </div>
                             <div class="md:col-span-3">
                                 <label class="flex items-center gap-2 text-sm">
@@ -588,36 +763,40 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow hover:bg-blue-700">Guardar Cambios</button>
+                    <button type="submit" class="mx-btn mx-btn-primary w-full">Guardar Cambios</button>
                 </form>
             </div>
 
             <!-- VIEW: MI PLATA (Contabilidad) -->
             <div v-show="currentView === 'plata'" class="p-4 md:p-6">
 
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-                    <h2 class="text-3xl font-bold text-gray-800">{{ esAdmin ? 'Mi Plata' : 'Cierre de caja' }}</h2>
-                    <button v-if="esAdmin" @click="imprimirResumenPlata" class="bg-blue-600 text-white px-4 py-3 rounded-lg shadow hover:bg-blue-700 font-semibold">
-                        <i class="fa-solid fa-print mr-1"></i> Imprimir reporte
+                <div class="flex justify-between items-end mb-5 flex-wrap gap-3">
+                    <div>
+                        <p class="mx-eyebrow">Contabilidad</p>
+                        <h2 class="mx-h1 mt-1">{{ esAdmin ? 'Mi Plata' : 'Cierre de caja' }}</h2>
+                        <p class="mx-sub mt-1">{{ esAdmin ? 'Cuánto entró, cuánto salió y cuánto le queda.' : 'Cuente la caja y ciérrela sin enredos.' }}</p>
+                    </div>
+                    <button v-if="esAdmin" @click="imprimirResumenPlata" class="mx-btn mx-btn-dark">
+                        <i class="fa-solid fa-print"></i> Imprimir reporte
                     </button>
                 </div>
 
                 <!-- Sub-pestañas (solo el dueño: el cajero entra directo al cierre) -->
-                <div v-if="esAdmin" class="flex gap-2 mb-6 overflow-x-auto pb-1">
-                    <button @click="plataTab = 'resumen'" :class="plataTab === 'resumen' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
-                        <i class="fa-solid fa-chart-column mr-1"></i> Resumen
+                <div v-if="esAdmin" class="flex gap-2 mb-5 overflow-x-auto pb-1">
+                    <button @click="plataTab = 'resumen'" :class="{'is-active': plataTab === 'resumen'}" class="mx-tab">
+                        <i class="fa-solid fa-chart-column"></i> Resumen
                     </button>
-                    <button @click="plataTab = 'gastos'; cargarGastos();" :class="plataTab === 'gastos' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
-                        <i class="fa-solid fa-receipt mr-1"></i> Gastos
+                    <button @click="plataTab = 'gastos'; cargarGastos();" :class="{'is-active': plataTab === 'gastos'}" class="mx-tab">
+                        <i class="fa-solid fa-receipt"></i> Gastos
                     </button>
-                    <button @click="plataTab = 'compras'; cargarCompras();" :class="plataTab === 'compras' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
-                        <i class="fa-solid fa-truck-ramp-box mr-1"></i> Compras
+                    <button @click="plataTab = 'compras'; cargarCompras();" :class="{'is-active': plataTab === 'compras'}" class="mx-tab">
+                        <i class="fa-solid fa-truck-ramp-box"></i> Compras
                     </button>
-                    <button @click="plataTab = 'cierre'; cargarCierre();" :class="plataTab === 'cierre' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
-                        <i class="fa-solid fa-cash-register mr-1"></i> Cierre de caja
+                    <button @click="plataTab = 'cierre'; cargarCierre();" :class="{'is-active': plataTab === 'cierre'}" class="mx-tab">
+                        <i class="fa-solid fa-cash-register"></i> Cierre de caja
                     </button>
-                    <button @click="plataTab = 'ventas'; cargarVentas();" :class="plataTab === 'ventas' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'" class="px-5 py-3 rounded-lg shadow font-semibold whitespace-nowrap">
-                        <i class="fa-solid fa-file-invoice-dollar mr-1"></i> Ventas
+                    <button @click="plataTab = 'ventas'; cargarVentas();" :class="{'is-active': plataTab === 'ventas'}" class="mx-tab">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> Ventas
                     </button>
                 </div>
 
@@ -625,10 +804,10 @@
                 <div v-show="plataTab === 'resumen'">
 
                     <!-- Filtro de fechas -->
-                    <div class="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap items-end gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Periodo</label>
-                            <select v-model="plataRango.periodo" @change="cargarPlata" class="border rounded-lg p-2">
+                    <div class="mx-card p-4 mb-5 flex flex-wrap items-end gap-3">
+                        <div class="w-full sm:w-44">
+                            <label class="mx-label">Periodo</label>
+                            <select v-model="plataRango.periodo" @change="cargarPlata" class="mx-input">
                                 <option value="hoy">Hoy</option>
                                 <option value="semana">Esta semana</option>
                                 <option value="mes">Este mes</option>
@@ -636,58 +815,58 @@
                                 <option value="rango">Elegir fechas…</option>
                             </select>
                         </div>
-                        <div v-if="plataRango.periodo === 'rango'">
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Desde</label>
-                            <input type="date" v-model="plataRango.desde" @change="cargarPlata" class="border rounded-lg p-2">
+                        <div v-if="plataRango.periodo === 'rango'" class="w-full sm:w-40">
+                            <label class="mx-label">Desde</label>
+                            <input type="date" v-model="plataRango.desde" @change="cargarPlata" class="mx-input">
                         </div>
-                        <div v-if="plataRango.periodo === 'rango'">
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Hasta</label>
-                            <input type="date" v-model="plataRango.hasta" @change="cargarPlata" class="border rounded-lg p-2">
+                        <div v-if="plataRango.periodo === 'rango'" class="w-full sm:w-40">
+                            <label class="mx-label">Hasta</label>
+                            <input type="date" v-model="plataRango.hasta" @change="cargarPlata" class="mx-input">
                         </div>
-                        <button @click="cargarPlata" class="bg-gray-800 text-white px-5 py-2 rounded-lg font-semibold hover:bg-gray-900">
+                        <button @click="cargarPlata" class="mx-btn mx-btn-dark">
                             <i class="fa-solid fa-rotate-right"></i> Actualizar
                         </button>
                     </div>
 
                     <!-- Tarjetas grandes -->
-                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-blue-500">
-                            <p class="text-sm text-gray-500 font-semibold mb-1">Capital en inventario</p>
-                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.capital_inventario) }}</h3>
-                            <p class="text-xs text-gray-400 mt-1">Lo que hay en el estante, a precio de compra</p>
+                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-5">
+                        <div class="mx-stat mx-stat-blue">
+                            <p class="mx-stat-label">Capital en inventario</p>
+                            <p class="mx-stat-value">{{ formatMoney(plataResumen.capital_inventario) }}</p>
+                            <p class="mx-stat-note">Lo que hay en el estante, a precio de compra</p>
                         </div>
-                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-green-500">
-                            <p class="text-sm text-gray-500 font-semibold mb-1">Dinero en caja hoy</p>
-                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.dinero_en_caja) }}</h3>
-                            <p class="text-xs text-gray-400 mt-1">Efectivo que debería haber</p>
+                        <div class="mx-stat mx-stat-green">
+                            <p class="mx-stat-label">Dinero en caja hoy</p>
+                            <p class="mx-stat-value">{{ formatMoney(plataResumen.dinero_en_caja) }}</p>
+                            <p class="mx-stat-note">Efectivo que debería haber</p>
                         </div>
-                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-red-500">
-                            <p class="text-sm text-gray-500 font-semibold mb-1">Plata en la calle</p>
-                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.plata_en_la_calle) }}</h3>
-                            <p class="text-xs text-gray-400 mt-1">Fiaos sin cobrar</p>
+                        <div class="mx-stat mx-stat-red">
+                            <p class="mx-stat-label">Plata en la calle</p>
+                            <p class="mx-stat-value">{{ formatMoney(plataResumen.plata_en_la_calle) }}</p>
+                            <p class="mx-stat-note">Fiaos sin cobrar</p>
                         </div>
-                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-emerald-500">
-                            <p class="text-sm text-gray-500 font-semibold mb-1">Utilidad del mes</p>
-                            <h3 class="text-2xl md:text-3xl font-bold text-emerald-600">{{ formatMoney(plataResumen.utilidad_mes) }}</h3>
-                            <p class="text-xs text-gray-400 mt-1">Lo vendido menos lo que costó</p>
+                        <div class="mx-stat mx-stat-green">
+                            <p class="mx-stat-label">Utilidad del mes</p>
+                            <p class="mx-stat-value">{{ formatMoney(plataResumen.utilidad_mes) }}</p>
+                            <p class="mx-stat-note">Lo vendido menos lo que costó</p>
                         </div>
-                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-amber-500">
-                            <p class="text-sm text-gray-500 font-semibold mb-1">Gastos del mes</p>
-                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.gastos_mes) }}</h3>
-                            <p class="text-xs text-gray-400 mt-1">Fletes, arriendo, servicios…</p>
+                        <div class="mx-stat mx-stat-amber">
+                            <p class="mx-stat-label">Gastos del mes</p>
+                            <p class="mx-stat-value">{{ formatMoney(plataResumen.gastos_mes) }}</p>
+                            <p class="mx-stat-note">Fletes, arriendo, servicios…</p>
                         </div>
-                        <div class="bg-white p-5 rounded-xl shadow border-l-4 border-purple-500">
-                            <p class="text-sm text-gray-500 font-semibold mb-1">Cuentas por pagar</p>
-                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800">{{ formatMoney(plataResumen.cuentas_por_pagar) }}</h3>
-                            <p class="text-xs text-gray-400 mt-1">Lo que le debemos a proveedores</p>
+                        <div class="mx-stat mx-stat-purple">
+                            <p class="mx-stat-label">Cuentas por pagar</p>
+                            <p class="mx-stat-value">{{ formatMoney(plataResumen.cuentas_por_pagar) }}</p>
+                            <p class="mx-stat-note">Lo que le debemos a proveedores</p>
                         </div>
                     </div>
 
                     <!-- Gráfico simple (sin librerías, funciona sin internet) -->
-                    <div class="bg-white p-6 rounded-xl shadow mb-6">
-                        <h3 class="text-lg font-bold mb-4">Cuánto gané por día</h3>
+                    <div class="mx-card p-5 md:p-6 mb-5">
+                        <h3 class="mx-h2 mb-4">Cuánto gané por día</h3>
 
-                        <div v-if="plataSerie.serie.length === 0" class="text-center text-gray-400 py-10">
+                        <div v-if="plataSerie.serie.length === 0" class="text-center text-slate-400 py-10">
                             <i class="fa-solid fa-chart-simple text-3xl mb-2"></i>
                             <p>Todavía no hay ventas en este periodo.</p>
                         </div>
@@ -696,55 +875,55 @@
                             <div v-for="p in plataSerie.serie" :key="p.periodo" class="flex flex-col items-center justify-end flex-shrink-0">
                                 <span class="text-xs font-bold text-emerald-700 mb-1">{{ formatMoneyCorto(p.utilidad) }}</span>
                                 <div class="w-10 bg-emerald-500 rounded-t hover:bg-emerald-600 transition" :style="{ height: alturaBarra(p.utilidad) }" :title="formatMoney(p.utilidad)"></div>
-                                <span class="text-[10px] text-gray-500 mt-2">{{ etiquetaPeriodo(p.periodo) }}</span>
+                                <span class="text-[10px] text-slate-500 mt-2">{{ etiquetaPeriodo(p.periodo) }}</span>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-3 gap-4 mt-6 border-t pt-4 text-center">
-                            <div><p class="text-sm text-gray-500">Vendido</p><p class="text-xl font-bold">{{ formatMoney(plataSerie.totales.ventas) }}</p></div>
-                            <div><p class="text-sm text-gray-500">Costó</p><p class="text-xl font-bold">{{ formatMoney(plataSerie.totales.costo) }}</p></div>
-                            <div><p class="text-sm text-gray-500">Utilidad</p><p class="text-xl font-bold text-emerald-600">{{ formatMoney(plataSerie.totales.utilidad) }}</p></div>
+                        <div class="grid grid-cols-3 gap-4 mt-6 border-t border-slate-100 pt-4 text-center">
+                            <div><p class="text-[11px] uppercase tracking-wider font-bold text-slate-400">Vendido</p><p class="font-num text-xl font-bold">{{ formatMoney(plataSerie.totales.ventas) }}</p></div>
+                            <div><p class="text-[11px] uppercase tracking-wider font-bold text-slate-400">Costó</p><p class="font-num text-xl font-bold">{{ formatMoney(plataSerie.totales.costo) }}</p></div>
+                            <div><p class="text-[11px] uppercase tracking-wider font-bold text-slate-400">Utilidad</p><p class="font-num text-xl font-bold text-emerald-700">{{ formatMoney(plataSerie.totales.utilidad) }}</p></div>
                         </div>
                     </div>
 
                     <!-- Contado vs fiao -->
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div v-for="t in plataTipos" :key="t.tipo_venta" class="bg-white p-5 rounded-xl shadow">
-                            <p class="text-sm font-bold text-gray-500 uppercase">{{ t.tipo_venta === 'contado' ? 'De contado' : 'Fiaos' }}</p>
-                            <p class="text-2xl font-bold mt-1">{{ formatMoney(t.ventas) }}</p>
-                            <p class="text-sm text-emerald-600 font-semibold">Utilidad: {{ formatMoney(t.utilidad) }}</p>
-                            <p class="text-xs text-gray-400">{{ t.num_ventas }} venta(s)</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                        <div v-for="t in plataTipos" :key="t.tipo_venta" class="mx-card p-5">
+                            <p class="text-[11px] uppercase tracking-wider font-bold text-slate-400">{{ t.tipo_venta === 'contado' ? 'De contado' : 'Fiaos' }}</p>
+                            <p class="font-num text-2xl font-bold mt-1 text-ink-800">{{ formatMoney(t.ventas) }}</p>
+                            <p class="text-sm text-emerald-700 font-semibold">Utilidad: {{ formatMoney(t.utilidad) }}</p>
+                            <p class="text-xs text-slate-400">{{ t.num_ventas }} venta(s)</p>
                         </div>
                     </div>
 
                     <!-- Utilidad por producto -->
-                    <div class="bg-white rounded-xl shadow overflow-hidden">
-                        <div class="p-4 border-b bg-gray-50">
-                            <h3 class="text-lg font-bold">Qué me deja más plata</h3>
+                    <div class="mx-card overflow-hidden">
+                        <div class="px-4 py-3 mx-bar">
+                            <h3 class="mx-h2">Qué me deja más plata</h3>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                            <table class="mx-table">
                                 <thead>
-                                    <tr class="bg-gray-100 text-gray-600 text-sm">
-                                        <th class="p-3">Producto</th>
-                                        <th class="p-3 text-center">Cantidad</th>
-                                        <th class="p-3 text-right">Vendido</th>
-                                        <th class="p-3 text-right">Costó</th>
-                                        <th class="p-3 text-right">Utilidad</th>
-                                        <th class="p-3 text-right">Margen</th>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-right">Vendido</th>
+                                        <th class="text-right">Costó</th>
+                                        <th class="text-right">Utilidad</th>
+                                        <th class="text-right">Margen</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="p in plataProductos" :key="p.producto_id" class="border-b hover:bg-gray-50">
-                                        <td class="p-3 font-medium">{{ p.nombre }}</td>
-                                        <td class="p-3 text-center">{{ p.cantidad }} {{ p.unidad }}</td>
-                                        <td class="p-3 text-right">{{ formatMoney(p.ventas) }}</td>
-                                        <td class="p-3 text-right text-gray-500">{{ formatMoney(p.costo) }}</td>
-                                        <td class="p-3 text-right font-bold text-emerald-600">{{ formatMoney(p.utilidad) }}</td>
-                                        <td class="p-3 text-right font-semibold" :class="p.margen >= 15 ? 'text-emerald-600' : 'text-amber-600'">{{ p.margen }}%</td>
+                                    <tr v-for="p in plataProductos" :key="p.producto_id">
+                                        <td class="font-medium">{{ p.nombre }}</td>
+                                        <td class="text-center">{{ p.cantidad }} {{ p.unidad }}</td>
+                                        <td class="text-right font-num">{{ formatMoney(p.ventas) }}</td>
+                                        <td class="text-right font-num text-slate-500">{{ formatMoney(p.costo) }}</td>
+                                        <td class="text-right font-num font-bold text-emerald-700">{{ formatMoney(p.utilidad) }}</td>
+                                        <td class="text-right font-semibold" :class="p.margen >= 15 ? 'text-emerald-700' : 'text-amber-600'">{{ p.margen }}%</td>
                                     </tr>
                                     <tr v-if="plataProductos.length === 0">
-                                        <td colspan="6" class="p-6 text-center text-gray-500">Sin ventas en este periodo.</td>
+                                        <td colspan="6" class="p-6 text-center text-slate-400">Sin ventas en este periodo.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -754,51 +933,51 @@
 
                 <!-- ===================== GASTOS ===================== -->
                 <div v-show="plataTab === 'gastos'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow h-fit">
-                        <h3 class="text-lg font-bold mb-4">Registrar un gasto</h3>
+                    <div class="mx-card p-5 md:p-6 h-fit">
+                        <h3 class="mx-h2 mb-4">Registrar un gasto</h3>
                         <form @submit.prevent="guardarGasto" class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">¿En qué se fue la plata?</label>
-                                <select v-model.number="gastoForm.categoria_id" required class="w-full p-3 border rounded-lg">
+                                <label class="mx-label">¿En qué se fue la plata?</label>
+                                <select v-model.number="gastoForm.categoria_id" required class="mx-input">
                                     <option value="" disabled>Seleccione una categoría</option>
                                     <option v-for="c in categoriasGasto" :key="c.id" :value="c.id">{{ c.nombre }}</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Descripción</label>
-                                <input v-model="gastoForm.descripcion" required type="text" placeholder="Ej: flete de cianuro" class="w-full p-3 border rounded-lg">
+                                <label class="mx-label">Descripción</label>
+                                <input v-model="gastoForm.descripcion" required type="text" placeholder="Ej: flete de cianuro" class="mx-input">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Monto ($)</label>
-                                <input v-model.number="gastoForm.monto" required type="number" min="1" class="w-full p-3 border rounded-lg text-right font-bold text-lg">
+                                <label class="mx-label">Monto ($)</label>
+                                <input v-model.number="gastoForm.monto" required type="number" min="1" class="mx-input text-right font-num font-bold text-lg">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">¿Cómo se pagó?</label>
-                                <select v-model="gastoForm.metodo_pago" class="w-full p-3 border rounded-lg">
+                                <label class="mx-label">¿Cómo se pagó?</label>
+                                <select v-model="gastoForm.metodo_pago" class="mx-input">
                                     <option value="efectivo">Efectivo (sale de la caja)</option>
                                     <option value="transferencia">Transferencia</option>
                                     <option value="otro">Otro</option>
                                 </select>
                             </div>
-                            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                            <button type="submit" class="mx-btn mx-btn-primary w-full">
                                 <i class="fa-solid fa-plus mr-1"></i> Guardar gasto
                             </button>
                         </form>
                     </div>
 
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow overflow-hidden">
-                        <div class="p-4 border-b bg-gray-50 flex justify-between items-center flex-wrap gap-2">
-                            <h3 class="text-lg font-bold">Gastos registrados</h3>
+                    <div class="lg:col-span-2 mx-card overflow-hidden">
+                        <div class="px-4 py-3 mx-bar flex justify-between items-center flex-wrap gap-2">
+                            <h3 class="mx-h2">Gastos registrados</h3>
                             <div class="flex items-center gap-2">
-                                <input type="date" v-model="gastosFiltro.desde" @change="cargarGastos" class="border rounded p-2 text-sm">
-                                <input type="date" v-model="gastosFiltro.hasta" @change="cargarGastos" class="border rounded p-2 text-sm">
+                                <input type="date" v-model="gastosFiltro.desde" @change="cargarGastos" class="mx-input text-sm">
+                                <input type="date" v-model="gastosFiltro.hasta" @change="cargarGastos" class="mx-input text-sm">
                                 <button @click="gastosFiltro.desde=''; gastosFiltro.hasta=''; cargarGastos();" class="text-blue-600 text-sm font-semibold">Limpiar</button>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                            <table class="mx-table">
                                 <thead>
-                                    <tr class="bg-gray-100 text-gray-600 text-sm">
+                                    <tr>
                                         <th class="p-3">Fecha</th>
                                         <th class="p-3">Categoría</th>
                                         <th class="p-3">Descripción</th>
@@ -807,7 +986,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="g in gastos" :key="g.id" class="border-b hover:bg-gray-50">
+                                    <tr v-for="g in gastos" :key="g.id">
                                         <td class="p-3 text-sm">{{ formatDate(g.fecha) }}</td>
                                         <td class="p-3 text-sm">{{ g.categoria }}</td>
                                         <td class="p-3">{{ g.descripcion }}</td>
@@ -817,11 +996,11 @@
                                         </td>
                                     </tr>
                                     <tr v-if="gastos.length === 0">
-                                        <td colspan="5" class="p-6 text-center text-gray-500">No hay gastos registrados.</td>
+                                        <td colspan="5" class="p-6 text-center text-slate-500">No hay gastos registrados.</td>
                                     </tr>
                                 </tbody>
                                 <tfoot v-if="gastos.length > 0">
-                                    <tr class="bg-gray-50 font-bold">
+                                    <tr class="bg-slate-50 font-bold">
                                         <td colspan="3" class="p-3 text-right">TOTAL</td>
                                         <td class="p-3 text-right text-amber-700">{{ formatMoney(gastosTotal) }}</td>
                                         <td></td>
@@ -834,50 +1013,50 @@
 
                 <!-- ===================== COMPRAS ===================== -->
                 <div v-show="plataTab === 'compras'" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow h-fit">
-                        <h3 class="text-lg font-bold mb-4">Entrada de mercancía</h3>
+                    <div class="mx-card p-5 md:p-6 h-fit">
+                        <h3 class="mx-h2 mb-4">Entrada de mercancía</h3>
                         <form @submit.prevent="guardarCompra" class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Proveedor</label>
-                                <select v-model.number="compraForm.proveedor_id" class="w-full p-3 border rounded-lg">
+                                <label class="mx-label">Proveedor</label>
+                                <select v-model.number="compraForm.proveedor_id" class="mx-input">
                                     <option :value="null">Sin proveedor</option>
                                     <option v-for="p in proveedores" :key="p.id" :value="p.id">{{ p.nombre }}</option>
                                 </select>
                             </div>
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label class="block text-xs font-bold text-gray-500 mb-1">Forma de pago</label>
-                                    <select v-model="compraForm.tipo_pago" class="w-full p-3 border rounded-lg">
+                                    <label class="mx-label">Forma de pago</label>
+                                    <select v-model="compraForm.tipo_pago" class="mx-input">
                                         <option value="contado">Contado</option>
                                         <option value="credito">A crédito</option>
                                     </select>
                                 </div>
                                 <div v-if="compraForm.tipo_pago === 'credito'">
-                                    <label class="block text-xs font-bold text-gray-500 mb-1">Vence</label>
-                                    <input v-model="compraForm.fecha_vencimiento" type="date" class="w-full p-3 border rounded-lg">
+                                    <label class="mx-label">Vence</label>
+                                    <input v-model="compraForm.fecha_vencimiento" type="date" class="mx-input">
                                 </div>
                             </div>
 
                             <div class="border-t pt-4">
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Agregar producto</label>
-                                <select v-model.number="compraLinea.producto_id" class="w-full p-3 border rounded-lg mb-2">
+                                <label class="mx-label">Agregar producto</label>
+                                <select v-model.number="compraLinea.producto_id" class="mx-input mb-2">
                                     <option value="" disabled>Seleccione un producto</option>
                                     <option v-for="p in productos" :key="p.id" :value="p.id">{{ p.nombre }}</option>
                                 </select>
                                 <div class="grid grid-cols-2 gap-3 mb-2">
-                                    <input v-model.number="compraLinea.cantidad" type="number" step="0.1" min="0.1" placeholder="Cantidad" class="w-full p-3 border rounded-lg">
-                                    <input v-model.number="compraLinea.costo_unitario" type="number" min="0" placeholder="Costo unitario" class="w-full p-3 border rounded-lg">
+                                    <input v-model.number="compraLinea.cantidad" type="number" step="0.1" min="0.1" placeholder="Cantidad" class="mx-input">
+                                    <input v-model.number="compraLinea.costo_unitario" type="number" min="0" placeholder="Costo unitario" class="mx-input">
                                 </div>
-                                <button type="button" @click="agregarLineaCompra" class="w-full bg-gray-800 text-white py-2 rounded-lg font-semibold hover:bg-gray-900">
+                                <button type="button" @click="agregarLineaCompra" class="mx-btn mx-btn-dark w-full">
                                     <i class="fa-solid fa-plus mr-1"></i> Agregar a la compra
                                 </button>
                             </div>
 
                             <div v-if="compraForm.detalles.length > 0" class="border-t pt-4 space-y-2">
-                                <div v-for="(l, i) in compraForm.detalles" :key="i" class="flex justify-between items-center bg-gray-50 p-3 rounded border">
+                                <div v-for="(l, i) in compraForm.detalles" :key="i" class="flex justify-between items-center bg-slate-50 p-3 rounded border">
                                     <div class="text-sm">
                                         <p class="font-semibold">{{ l.nombre }}</p>
-                                        <p class="text-gray-500">{{ l.cantidad }} x {{ formatMoney(l.costo_unitario) }}</p>
+                                        <p class="text-slate-500">{{ l.cantidad }} x {{ formatMoney(l.costo_unitario) }}</p>
                                     </div>
                                     <div class="flex items-center gap-3">
                                         <span class="font-bold">{{ formatMoney(l.cantidad * l.costo_unitario) }}</span>
@@ -890,23 +1069,23 @@
                                 </div>
                             </div>
 
-                            <button type="submit" :disabled="compraForm.detalles.length === 0" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50">
+                            <button type="submit" :disabled="compraForm.detalles.length === 0" class="mx-btn mx-btn-primary w-full">
                                 <i class="fa-solid fa-truck-ramp-box mr-1"></i> Registrar entrada
                             </button>
                         </form>
                     </div>
 
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow overflow-hidden h-fit">
-                        <div class="p-4 border-b bg-gray-50">
-                            <h3 class="text-lg font-bold">Cuentas por pagar</h3>
-                            <p class="text-sm text-gray-500">Total que le debemos a los proveedores:
+                    <div class="lg:col-span-2 mx-card overflow-hidden h-fit">
+                        <div class="px-4 py-3 mx-bar">
+                            <h3 class="mx-h2">Cuentas por pagar</h3>
+                            <p class="text-sm text-slate-500">Total que le debemos a los proveedores:
                                 <strong class="text-purple-700">{{ formatMoney(comprasPendientes.total) }}</strong>
                             </p>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                            <table class="mx-table">
                                 <thead>
-                                    <tr class="bg-gray-100 text-gray-600 text-sm">
+                                    <tr>
                                         <th class="p-3">Proveedor</th>
                                         <th class="p-3">Compra</th>
                                         <th class="p-3">Vence</th>
@@ -915,7 +1094,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="c in comprasPendientes.compras" :key="c.id" class="border-b hover:bg-gray-50">
+                                    <tr v-for="c in comprasPendientes.compras" :key="c.id">
                                         <td class="p-3 font-medium">{{ c.proveedor || 'Sin proveedor' }}</td>
                                         <td class="p-3 text-sm">{{ formatDate(c.fecha) }}</td>
                                         <td class="p-3 text-sm font-semibold">{{ formatDate(c.fecha_vencimiento) }}</td>
@@ -927,7 +1106,7 @@
                                         </td>
                                     </tr>
                                     <tr v-if="comprasPendientes.compras.length === 0">
-                                        <td colspan="5" class="p-6 text-center text-gray-500">No hay cuentas por pagar. ¡Bien ahí!</td>
+                                        <td colspan="5" class="p-6 text-center text-slate-500">No hay cuentas por pagar. ¡Bien ahí!</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -937,10 +1116,10 @@
 
                 <!-- ===================== CIERRE DE CAJA ===================== -->
                 <div v-show="plataTab === 'cierre'" class="max-w-2xl mx-auto">
-                    <div class="bg-white p-6 rounded-xl shadow">
+                    <div class="mx-card p-5 md:p-6">
                         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                            <h3 class="text-lg font-bold">Arqueo de caja</h3>
-                            <input type="date" v-model="cierreFecha" @change="cargarCierre" class="border rounded-lg p-2">
+                            <h3 class="mx-h2">Arqueo de caja</h3>
+                            <input type="date" v-model="cierreFecha" @change="cargarCierre" class="mx-input">
                         </div>
 
                         <span v-if="cierre.ya_cerrado" class="inline-block mb-4 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-semibold">
@@ -949,23 +1128,23 @@
 
                         <div class="space-y-2 text-lg">
                             <div class="flex justify-between border-b pb-2">
-                                <span class="text-gray-600">Efectivo inicial</span>
-                                <input v-model.number="cierre.efectivo_inicial" type="number" class="w-40 text-right border rounded-lg p-2">
+                                <span class="text-slate-600">Efectivo inicial</span>
+                                <input v-model.number="cierre.efectivo_inicial" type="number" class="mx-input mx-w-40 text-right">
                             </div>
                             <div class="flex justify-between border-b pb-2">
-                                <span class="text-gray-600">+ Ventas de contado en efectivo</span>
+                                <span class="text-slate-600">+ Ventas de contado en efectivo</span>
                                 <span class="font-semibold">{{ formatMoney(cierre.ventas_efectivo) }}</span>
                             </div>
                             <div class="flex justify-between border-b pb-2">
-                                <span class="text-gray-600">+ Abonos en efectivo</span>
+                                <span class="text-slate-600">+ Abonos en efectivo</span>
                                 <span class="font-semibold">{{ formatMoney(cierre.abonos_efectivo) }}</span>
                             </div>
                             <div class="flex justify-between border-b pb-2">
-                                <span class="text-gray-600">- Gastos en efectivo</span>
+                                <span class="text-slate-600">- Gastos en efectivo</span>
                                 <span class="font-semibold text-amber-700">{{ formatMoney(cierre.gastos_efectivo) }}</span>
                             </div>
                             <div class="flex justify-between border-b pb-2">
-                                <span class="text-gray-600">- Pagos a proveedores en efectivo</span>
+                                <span class="text-slate-600">- Pagos a proveedores en efectivo</span>
                                 <span class="font-semibold text-amber-700">{{ formatMoney(cierre.pagos_proveedor_efectivo) }}</span>
                             </div>
                             <div class="flex justify-between bg-blue-50 p-3 rounded-lg font-bold text-xl">
@@ -975,12 +1154,12 @@
                         </div>
 
                         <div class="mt-6">
-                            <label class="block text-sm font-bold text-gray-600 mb-1">¿Cuánto contó el cajero?</label>
-                            <input v-model.number="cierre.efectivo_contado" type="number" class="w-full p-4 border-2 border-blue-300 rounded-lg text-right text-2xl font-bold bg-blue-50">
+                            <label class="mx-label">¿Cuánto contó el cajero?</label>
+                            <input v-model.number="cierre.efectivo_contado" type="number" class="mx-input mx-big border-2 border-blue-300 bg-blue-50/50">
                         </div>
 
                         <div v-if="cierre.efectivo_contado !== null && cierre.efectivo_contado !== ''" class="mt-4 p-4 rounded-lg text-center" :class="diferenciaCaja === 0 ? 'bg-emerald-100' : (diferenciaCaja < 0 ? 'bg-red-100' : 'bg-amber-100')">
-                            <p class="text-sm font-semibold text-gray-600">Diferencia</p>
+                            <p class="text-sm font-semibold text-slate-600">Diferencia</p>
                             <p class="text-3xl font-bold" :class="diferenciaCaja === 0 ? 'text-emerald-700' : (diferenciaCaja < 0 ? 'text-red-700' : 'text-amber-700')">
                                 {{ formatMoney(diferenciaCaja) }}
                             </p>
@@ -990,15 +1169,15 @@
                         </div>
 
                         <div class="mt-4">
-                            <label class="block text-sm font-bold text-gray-600 mb-1">Observación (opcional)</label>
-                            <input v-model="cierre.observacion" type="text" placeholder="Ej: faltante por vueltos" class="w-full p-3 border rounded-lg">
+                            <label class="mx-label">Observación (opcional)</label>
+                            <input v-model="cierre.observacion" type="text" placeholder="Ej: faltante por vueltos" class="mx-input">
                         </div>
 
                         <div class="flex gap-3 mt-6">
-                            <button @click="guardarCierre" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                            <button @click="guardarCierre" class="mx-btn mx-btn-primary flex-1">
                                 <i class="fa-solid fa-lock mr-1"></i> Guardar cierre
                             </button>
-                            <button @click="imprimirCierre" class="flex-1 bg-gray-800 text-white py-3 rounded-lg font-bold hover:bg-gray-900">
+                            <button @click="imprimirCierre" class="mx-btn mx-btn-dark flex-1">
                                 <i class="fa-solid fa-print mr-1"></i> Imprimir
                             </button>
                         </div>
@@ -1009,55 +1188,55 @@
                 <div v-show="plataTab === 'ventas'">
 
                     <!-- Filtros -->
-                    <div class="bg-white p-4 rounded-xl shadow mb-4 flex flex-wrap items-end gap-3">
+                    <div class="mx-card p-4 mb-4 flex flex-wrap items-end gap-3">
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Desde</label>
-                            <input type="date" v-model="ventasFiltro.desde" @change="cargarVentas" class="border rounded-lg p-2">
+                            <label class="mx-label">Desde</label>
+                            <input type="date" v-model="ventasFiltro.desde" @change="cargarVentas" class="mx-input">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Hasta</label>
-                            <input type="date" v-model="ventasFiltro.hasta" @change="cargarVentas" class="border rounded-lg p-2">
+                            <label class="mx-label">Hasta</label>
+                            <input type="date" v-model="ventasFiltro.hasta" @change="cargarVentas" class="mx-input">
                         </div>
                         <div class="flex-1 min-w-[200px]">
-                            <label class="block text-xs font-bold text-gray-500 mb-1">Buscar</label>
-                            <input type="text" v-model="ventasFiltro.q" @keyup.enter="cargarVentas" placeholder="Cédula, cliente, vendedor o producto..." class="w-full border rounded-lg p-2">
+                            <label class="mx-label">Buscar</label>
+                            <input type="text" v-model="ventasFiltro.q" @keyup.enter="cargarVentas" placeholder="Cédula, cliente, vendedor o producto..." class="mx-input">
                         </div>
-                        <label class="flex items-center gap-2 pb-2.5 text-sm font-semibold text-gray-700">
+                        <label class="flex items-center gap-2 pb-2.5 text-sm font-semibold text-slate-700">
                             <input type="checkbox" v-model="ventasFiltro.controladas" @change="cargarVentas" class="w-5 h-5">
                             Solo controladas
                         </label>
-                        <button @click="cargarVentas" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-blue-700">
+                        <button @click="cargarVentas" class="mx-btn mx-btn-primary">
                             <i class="fa-solid fa-magnifying-glass mr-1"></i> Buscar
                         </button>
-                        <button @click="imprimirLibroControlados" class="bg-gray-800 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-900">
+                        <button @click="imprimirLibroControlados" class="mx-btn mx-btn-dark">
                             <i class="fa-solid fa-book-medical mr-1"></i> Imprimir libro de controlados
                         </button>
                     </div>
 
                     <!-- Resumen del periodo -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                        <div class="bg-white p-4 rounded-xl shadow">
-                            <p class="text-xs font-bold text-gray-500 uppercase">Ventas</p>
-                            <p class="text-2xl font-bold text-blue-800">{{ ventasResumen.cantidad || 0 }}</p>
+                        <div class="mx-card p-4">
+                            <p class="mx-stat-label">Ventas</p>
+                            <p class="font-num text-2xl font-bold text-blue-800">{{ ventasResumen.cantidad || 0 }}</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow">
-                            <p class="text-xs font-bold text-gray-500 uppercase">Vendido (sin anuladas)</p>
-                            <p class="text-2xl font-bold text-emerald-700">{{ formatMoney(ventasResumen.total || 0) }}</p>
+                        <div class="mx-card p-4">
+                            <p class="mx-stat-label">Vendido (sin anuladas)</p>
+                            <p class="font-num text-2xl font-bold text-emerald-700">{{ formatMoney(ventasResumen.total || 0) }}</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow">
-                            <p class="text-xs font-bold text-gray-500 uppercase">Anuladas</p>
-                            <p class="text-2xl font-bold text-red-700">{{ ventasResumen.anuladas || 0 }}</p>
+                        <div class="mx-card p-4">
+                            <p class="mx-stat-label">Anuladas</p>
+                            <p class="font-num text-2xl font-bold text-red-700">{{ ventasResumen.anuladas || 0 }}</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow">
-                            <p class="text-xs font-bold text-gray-500 uppercase">Con controlados</p>
-                            <p class="text-2xl font-bold text-amber-700">{{ ventasResumen.controladas || 0 }}</p>
+                        <div class="mx-card p-4">
+                            <p class="mx-stat-label">Con controlados</p>
+                            <p class="font-num text-2xl font-bold text-amber-700">{{ ventasResumen.controladas || 0 }}</p>
                         </div>
                     </div>
 
                     <!-- Lista -->
-                    <div class="bg-white rounded-xl shadow overflow-x-auto">
-                        <table class="w-full text-sm min-w-[820px]">
-                            <thead class="bg-gray-50 text-left text-gray-500">
+                    <div class="mx-card overflow-x-auto">
+                        <table class="mx-table text-sm min-w-[820px]">
+                            <thead>
                                 <tr>
                                     <th class="p-3">Venta</th>
                                     <th class="p-3">Fecha</th>
@@ -1069,21 +1248,21 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="v in ventasLista" :key="v.id" :class="v.anulada == 1 ? 'bg-red-50' : 'hover:bg-gray-50'">
-                                    <td class="p-3 font-mono font-semibold" :class="v.anulada == 1 ? 'text-gray-400 line-through' : ''">#{{ v.id }}</td>
+                                <tr v-for="v in ventasLista" :key="v.id" :class="v.anulada == 1 ? 'bg-red-50' : 'hover:bg-slate-50'">
+                                    <td class="p-3 font-mono font-semibold" :class="v.anulada == 1 ? 'text-slate-400 line-through' : ''">#{{ v.id }}</td>
                                     <td class="p-3 whitespace-nowrap">
                                         {{ formatDate(v.fecha) }}
-                                        <div class="text-xs text-gray-400">{{ String(v.fecha).slice(11, 16) }}</div>
+                                        <div class="text-xs text-slate-400">{{ String(v.fecha).slice(11, 16) }}</div>
                                     </td>
                                     <td class="p-3">
                                         <div v-if="v.cliente_nombre" class="font-semibold">{{ v.cliente_nombre }}</div>
-                                        <div v-if="v.cedula" class="text-xs text-gray-500">CC {{ v.cedula }}</div>
-                                        <div v-if="!v.cliente_nombre" class="text-xs text-gray-400">Sin cliente</div>
+                                        <div v-if="v.cedula" class="text-xs text-slate-500">CC {{ v.cedula }}</div>
+                                        <div v-if="!v.cliente_nombre" class="text-xs text-slate-400">Sin cliente</div>
                                     </td>
                                     <td class="p-3 max-w-xs">
-                                        <div :class="v.anulada == 1 ? 'text-gray-400 line-through' : ''">{{ v.detalle }}</div>
+                                        <div :class="v.anulada == 1 ? 'text-slate-400 line-through' : ''">{{ v.detalle }}</div>
                                         <div class="mt-1 flex flex-wrap gap-1">
-                                            <span class="text-xs px-1.5 py-0.5 rounded" :class="v.tipo_venta === 'credito' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'">
+                                            <span class="text-xs px-1.5 py-0.5 rounded" :class="v.tipo_venta === 'credito' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'">
                                                 {{ v.tipo_venta === 'credito' ? 'Fiao' : 'Contado' }} · {{ v.metodo_pago }}
                                             </span>
                                             <span v-if="v.lineas_controladas > 0" class="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">controlado</span>
@@ -1092,26 +1271,26 @@
                                             <i class="fa-solid fa-ban mr-1"></i>Anulada por {{ v.anulada_por || '—' }}: {{ v.anulada_motivo }}
                                         </div>
                                     </td>
-                                    <td class="p-3 text-right font-bold whitespace-nowrap" :class="v.anulada == 1 ? 'text-gray-400 line-through' : ''">{{ formatMoney(v.total) }}</td>
-                                    <td class="p-3 text-xs text-gray-600">{{ v.vendedor || '—' }}</td>
+                                    <td class="p-3 text-right font-bold whitespace-nowrap" :class="v.anulada == 1 ? 'text-slate-400 line-through' : ''">{{ formatMoney(v.total) }}</td>
+                                    <td class="p-3 text-xs text-slate-600">{{ v.vendedor || '—' }}</td>
                                     <td class="p-3 text-right">
                                         <button v-if="v.anulada != 1" @click="abrirAnularModal(v)" class="text-red-600 border border-red-200 rounded-lg px-3 py-2 font-semibold hover:bg-red-50 whitespace-nowrap">
                                             <i class="fa-solid fa-ban mr-1"></i> Anular
                                         </button>
-                                        <span v-else class="text-xs text-gray-400">Anulada</span>
+                                        <span v-else class="text-xs text-slate-400">Anulada</span>
                                     </td>
                                 </tr>
                                 <tr v-if="cargandoVentas">
-                                    <td colspan="7" class="p-6 text-center text-gray-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando...</td>
+                                    <td colspan="7" class="p-6 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Cargando...</td>
                                 </tr>
                                 <tr v-else-if="ventasLista.length === 0">
-                                    <td colspan="7" class="p-6 text-center text-gray-400">No hay ventas en ese periodo</td>
+                                    <td colspan="7" class="p-6 text-center text-slate-400">No hay ventas en ese periodo</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <p class="text-xs text-gray-500 mt-3">
+                    <p class="text-xs text-slate-500 mt-3">
                         <i class="fa-solid fa-circle-info mr-1"></i>
                         Anular devuelve el producto al inventario, pero no saca plata de la caja. Si el fiao ya tenía abonos
                         o el día ya estaba cerrado, registre la devolución como gasto en <strong>Devoluciones</strong>.
@@ -1125,25 +1304,25 @@
             </div>
 
             <!-- MODAL: PAGO A PROVEEDOR -->
-            <div v-if="pagoProveedorModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+            <div v-if="pagoProveedorModal.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+                <div class="mx-modal p-6 w-full max-w-sm">
                     <h3 class="text-xl font-bold mb-4">Pagar al proveedor</h3>
-                    <p class="text-sm text-gray-600 mb-1">Proveedor: <strong>{{ pagoProveedorModal.data.proveedor || 'Sin proveedor' }}</strong></p>
-                    <p class="text-sm text-gray-600 mb-4">Saldo: <strong class="text-purple-700">{{ formatMoney(pagoProveedorModal.data.saldo_pendiente) }}</strong></p>
+                    <p class="text-sm text-slate-600 mb-1">Proveedor: <strong>{{ pagoProveedorModal.data.proveedor || 'Sin proveedor' }}</strong></p>
+                    <p class="text-sm text-slate-600 mb-4">Saldo: <strong class="text-purple-700">{{ formatMoney(pagoProveedorModal.data.saldo_pendiente) }}</strong></p>
 
-                    <label class="block text-sm font-bold mb-1">Monto a pagar ($)</label>
-                    <input type="number" v-model.number="pagoProveedorModal.monto" :max="pagoProveedorModal.data.saldo_pendiente" class="w-full p-3 border rounded text-xl text-right font-bold bg-green-50 mb-3">
+                    <label class="mx-label">Monto a pagar ($)</label>
+                    <input type="number" v-model.number="pagoProveedorModal.monto" :max="pagoProveedorModal.data.saldo_pendiente" class="mx-input mx-big bg-emerald-50/50 mb-3">
 
-                    <label class="block text-sm font-bold mb-1">¿Cómo se pagó?</label>
-                    <select v-model="pagoProveedorModal.metodo_pago" class="w-full p-3 border rounded mb-4">
+                    <label class="mx-label">¿Cómo se pagó?</label>
+                    <select v-model="pagoProveedorModal.metodo_pago" class="mx-input mb-4">
                         <option value="efectivo">Efectivo (sale de la caja)</option>
                         <option value="transferencia">Transferencia</option>
                         <option value="otro">Otro</option>
                     </select>
 
                     <div class="flex space-x-3">
-                        <button @click="pagoProveedorModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                        <button @click="procesarPagoProveedor" :disabled="pagoProveedorModal.monto <= 0 || pagoProveedorModal.monto > pagoProveedorModal.data.saldo_pendiente" class="flex-1 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 disabled:opacity-50">Pagar</button>
+                        <button @click="pagoProveedorModal.show = false" class="mx-btn mx-btn-ghost flex-1">Cancelar</button>
+                        <button @click="procesarPagoProveedor" :disabled="pagoProveedorModal.monto <= 0 || pagoProveedorModal.monto > pagoProveedorModal.data.saldo_pendiente" class="mx-btn mx-btn-success flex-1">Pagar</button>
                     </div>
                 </div>
             </div>
@@ -1152,77 +1331,77 @@
         </div>
 
         <!-- MODAL: ABONO -->
-        <div v-if="abonoModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+        <div v-if="abonoModal.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="mx-modal p-6 w-full max-w-sm">
                 <h3 class="text-xl font-bold mb-4">Registrar abono</h3>
-                <p class="text-sm text-gray-600 mb-2">Cliente: <strong>{{ abonoModal.data.cliente_nombre }}</strong></p>
+                <p class="text-sm text-slate-600 mb-2">Cliente: <strong>{{ abonoModal.data.cliente_nombre }}</strong></p>
 
-                <div class="text-sm text-gray-600 mb-3 space-y-1 bg-gray-50 p-3 rounded">
+                <div class="text-sm text-slate-600 mb-3 space-y-1 bg-slate-50 p-3 rounded">
                     <p>Saldo: <strong>{{ formatMoney(abonoModal.data.saldo_pendiente) }}</strong></p>
                     <p v-if="abonoModal.data.mora > 0" class="text-red-600">Mora ({{ abonoModal.data.dias_mora }} días): <strong>{{ formatMoney(abonoModal.data.mora) }}</strong></p>
                     <p class="text-base">Total a pagar: <strong class="text-blue-700">{{ formatMoney(abonoModal.data.total_a_pagar) }}</strong></p>
                 </div>
 
-                <label class="block text-sm font-bold mb-1">¿Cuánto abona? ($)</label>
-                <input type="number" v-model.number="abonoModal.monto" :max="abonoModal.data.total_a_pagar" class="w-full p-3 border rounded text-xl text-right font-bold bg-green-50 mb-2">
+                <label class="mx-label">¿Cuánto abona? ($)</label>
+                <input type="number" v-model.number="abonoModal.monto" :max="abonoModal.data.total_a_pagar" class="mx-input mx-big bg-emerald-50/50 mb-2">
                 <div class="flex gap-2 mb-4">
-                    <button type="button" @click="abonoModal.monto = abonoModal.data.saldo_pendiente" class="flex-1 text-xs bg-gray-100 py-2 rounded font-semibold hover:bg-gray-200">Solo el saldo</button>
-                    <button type="button" @click="abonoModal.monto = abonoModal.data.total_a_pagar" class="flex-1 text-xs bg-gray-100 py-2 rounded font-semibold hover:bg-gray-200">Con la mora</button>
+                    <button type="button" @click="abonoModal.monto = abonoModal.data.saldo_pendiente" class="flex-1 text-xs bg-slate-100 py-2 rounded font-semibold hover:bg-gray-200">Solo el saldo</button>
+                    <button type="button" @click="abonoModal.monto = abonoModal.data.total_a_pagar" class="flex-1 text-xs bg-slate-100 py-2 rounded font-semibold hover:bg-gray-200">Con la mora</button>
                 </div>
 
-                <label class="block text-sm font-bold mb-1">¿Cómo pagó?</label>
-                <select v-model="abonoModal.metodo_pago" class="w-full p-3 border rounded mb-4">
+                <label class="mx-label">¿Cómo pagó?</label>
+                <select v-model="abonoModal.metodo_pago" class="mx-input mb-4">
                     <option value="efectivo">Efectivo (entra a la caja)</option>
                     <option value="transferencia">Transferencia</option>
                     <option value="otro">Otro</option>
                 </select>
 
                 <div class="flex space-x-3">
-                    <button @click="abonoModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                    <button @click="procesarAbono" :disabled="abonoModal.monto <= 0 || abonoModal.monto > abonoModal.data.total_a_pagar" class="flex-1 py-2 bg-green-600 text-white rounded font-semibold hover:bg-green-700 disabled:opacity-50">Guardar</button>
+                    <button @click="abonoModal.show = false" class="mx-btn mx-btn-ghost flex-1">Cancelar</button>
+                    <button @click="procesarAbono" :disabled="abonoModal.monto <= 0 || abonoModal.monto > abonoModal.data.total_a_pagar" class="mx-btn mx-btn-success flex-1">Guardar</button>
                 </div>
             </div>
         </div>
 
         <!-- MODAL: ACUERDO DE PAGO -->
-        <div v-if="acuerdoModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+        <div v-if="acuerdoModal.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="mx-modal p-6 w-full max-w-sm">
                 <h3 class="text-xl font-bold mb-1">Acuerdo de pago</h3>
-                <p class="text-sm text-gray-500 mb-4">Corra la fecha de un fiao que no se pudo pagar. Queda el registro de quién pactó qué.</p>
+                <p class="text-sm text-slate-500 mb-4">Corra la fecha de un fiao que no se pudo pagar. Queda el registro de quién pactó qué.</p>
 
-                <p class="text-sm text-gray-600 mb-3">Cliente: <strong>{{ acuerdoModal.data.cliente_nombre }}</strong></p>
+                <p class="text-sm text-slate-600 mb-3">Cliente: <strong>{{ acuerdoModal.data.cliente_nombre }}</strong></p>
 
-                <label class="block text-sm font-bold mb-1">Nuevo vencimiento</label>
-                <input type="date" v-model="acuerdoModal.fecha_nueva" :min="hoyISO" class="w-full p-3 border rounded mb-3">
+                <label class="mx-label">Nuevo vencimiento</label>
+                <input type="date" v-model="acuerdoModal.fecha_nueva" :min="hoyISO" class="mx-input mb-3">
 
-                <label class="block text-sm font-bold mb-1">Monto pactado ($)</label>
-                <input type="number" v-model.number="acuerdoModal.monto_pactado" class="w-full p-3 border rounded text-right font-bold bg-blue-50 mb-1">
-                <p class="text-xs text-gray-500 mb-3">Saldo + mora actual: <strong>{{ formatMoney(acuerdoModal.data.total_a_pagar) }}</strong></p>
+                <label class="mx-label">Monto pactado ($)</label>
+                <input type="number" v-model.number="acuerdoModal.monto_pactado" class="mx-input font-num text-right font-bold bg-blue-50 mb-1">
+                <p class="text-xs text-slate-500 mb-3">Saldo + mora actual: <strong>{{ formatMoney(acuerdoModal.data.total_a_pagar) }}</strong></p>
 
-                <label class="block text-sm font-bold mb-1">Observación (opcional)</label>
-                <input type="text" v-model="acuerdoModal.observacion" placeholder="Ej: pagó una parte y pidió plazo" class="w-full p-3 border rounded mb-4">
+                <label class="mx-label">Observación (opcional)</label>
+                <input type="text" v-model="acuerdoModal.observacion" placeholder="Ej: pagó una parte y pidió plazo" class="mx-input mb-4">
 
                 <div class="flex space-x-3">
-                    <button @click="acuerdoModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                    <button @click="procesarAcuerdo" :disabled="!acuerdoModal.fecha_nueva || acuerdoModal.monto_pactado <= 0" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 disabled:opacity-50">Guardar acuerdo</button>
+                    <button @click="acuerdoModal.show = false" class="mx-btn mx-btn-ghost flex-1">Cancelar</button>
+                    <button @click="procesarAcuerdo" :disabled="!acuerdoModal.fecha_nueva || acuerdoModal.monto_pactado <= 0" class="mx-btn mx-btn-primary flex-1">Guardar acuerdo</button>
                 </div>
             </div>
         </div>
 
         <!-- MODAL: ESTADO DE CUENTA -->
-        <div v-if="estadoCuentaModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div v-if="estadoCuentaModal.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="mx-modal p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold">Estado de cuenta</h3>
-                    <button @click="estadoCuentaModal.show = false" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+                    <button @click="estadoCuentaModal.show = false" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
                 </div>
 
                 <div v-if="estadoCuentaModal.data">
-                    <div class="bg-gray-50 p-4 rounded mb-4">
+                    <div class="bg-slate-50 p-4 rounded mb-4">
                         <p class="font-bold text-lg">{{ estadoCuentaModal.data.credito.cliente_nombre }}</p>
-                        <p class="text-sm text-gray-600">C.C. {{ estadoCuentaModal.data.credito.cliente_cedula }}</p>
-                        <p class="text-sm text-gray-600">{{ estadoCuentaModal.data.credito.cliente_ubicacion }}</p>
-                        <p class="text-sm text-gray-600">Fiao del {{ formatDate(estadoCuentaModal.data.credito.fecha_venta) }}</p>
+                        <p class="text-sm text-slate-600">C.C. {{ estadoCuentaModal.data.credito.cliente_cedula }}</p>
+                        <p class="text-sm text-slate-600">{{ estadoCuentaModal.data.credito.cliente_ubicacion }}</p>
+                        <p class="text-sm text-slate-600">Fiao del {{ formatDate(estadoCuentaModal.data.credito.fecha_venta) }}</p>
                     </div>
 
                     <h4 class="font-bold mb-2">Qué se llevó</h4>
@@ -1239,11 +1418,11 @@
                     <table class="w-full text-left text-sm mb-4">
                         <tbody>
                             <tr v-for="a in estadoCuentaModal.data.abonos" :key="a.id" class="border-b">
-                                <td class="py-2">{{ formatDate(a.fecha) }} <span class="text-gray-400">({{ a.metodo_pago }})</span></td>
+                                <td class="py-2">{{ formatDate(a.fecha) }} <span class="text-slate-400">({{ a.metodo_pago }})</span></td>
                                 <td class="py-2 text-right font-semibold text-green-700">{{ formatMoney(a.monto) }}</td>
                             </tr>
                             <tr v-if="estadoCuentaModal.data.abonos.length === 0">
-                                <td colspan="2" class="py-2 text-center text-gray-400">Todavía no ha abonado nada</td>
+                                <td colspan="2" class="py-2 text-center text-slate-400">Todavía no ha abonado nada</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1255,7 +1434,7 @@
                                 <tr v-for="ac in estadoCuentaModal.data.acuerdos" :key="ac.id" class="border-b">
                                     <td class="py-2">
                                         Se corrió de {{ formatDate(ac.fecha_antes) }} a {{ formatDate(ac.fecha_nueva) }}
-                                        <p v-if="ac.observacion" class="text-xs text-gray-500">{{ ac.observacion }}</p>
+                                        <p v-if="ac.observacion" class="text-xs text-slate-500">{{ ac.observacion }}</p>
                                     </td>
                                     <td class="py-2 text-right font-semibold">{{ formatMoney(ac.monto_pactado) }}</td>
                                 </tr>
@@ -1271,30 +1450,30 @@
                 </div>
 
                 <div class="flex gap-3 mt-4">
-                    <button @click="estadoCuentaModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cerrar</button>
-                    <button @click="imprimirEstadoCuenta" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
+                    <button @click="estadoCuentaModal.show = false" class="mx-btn mx-btn-ghost flex-1">Cerrar</button>
+                    <button @click="imprimirEstadoCuenta" class="mx-btn mx-btn-primary flex-1"><i class="fa-solid fa-print mr-1"></i> Imprimir</button>
                 </div>
             </div>
         </div>
 
         <!-- MODAL: PRODUCTO -->
-        <div v-if="productModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <div v-if="productModal.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="mx-modal p-6 w-full max-w-md">
                 <h3 class="text-xl font-bold mb-4">{{ productModal.isEdit ? 'Editar Producto' : 'Nuevo Producto' }}</h3>
                 <form @submit.prevent="saveProduct" class="space-y-3">
-                    <div><label class="block text-xs font-bold">Nombre</label><input v-model="productModal.data.nombre" required type="text" class="w-full p-2 border rounded"></div>
-                    <div><label class="block text-xs font-bold">Descripción (¿para qué sirve?)</label><textarea v-model="productModal.data.descripcion" rows="2" placeholder="Ej: reactivo de alta pureza para beneficio de oro" class="w-full p-2 border rounded text-sm"></textarea></div>
-                    <div><label class="block text-xs font-bold">Unidad (ej. Kg, Und, Galón)</label><input v-model="productModal.data.unidad" required type="text" class="w-full p-2 border rounded"></div>
+                    <div><label class="mx-label">Nombre</label><input v-model="productModal.data.nombre" required type="text" class="mx-input"></div>
+                    <div><label class="mx-label">Descripción (¿para qué sirve?)</label><textarea v-model="productModal.data.descripcion" rows="2" placeholder="Ej: reactivo de alta pureza para beneficio de oro" class="mx-input text-sm"></textarea></div>
+                    <div><label class="mx-label">Unidad (ej. Kg, Und, Galón)</label><input v-model="productModal.data.unidad" required type="text" class="mx-input"></div>
                     
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold">Precio Costo</label><input v-model.number="productModal.data.precio_costo" type="number" class="w-full p-2 border rounded"></div>
-                        <div><label class="block text-xs font-bold">Precio Contado</label><input v-model.number="productModal.data.precio_contado" type="number" class="w-full p-2 border rounded bg-blue-50"></div>
-                        <div><label class="block text-xs font-bold">Precio Crédito</label><input v-model.number="productModal.data.precio_credito" type="number" class="w-full p-2 border rounded bg-purple-50"></div>
+                        <div><label class="mx-label">Precio Costo</label><input v-model.number="productModal.data.precio_costo" type="number" class="mx-input"></div>
+                        <div><label class="mx-label">Precio Contado</label><input v-model.number="productModal.data.precio_contado" type="number" class="mx-input bg-blue-50"></div>
+                        <div><label class="mx-label">Precio Crédito</label><input v-model.number="productModal.data.precio_credito" type="number" class="mx-input bg-purple-50"></div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold">Stock Actual</label><input v-model.number="productModal.data.stock" type="number" step="0.1" class="w-full p-2 border rounded"></div>
-                        <div><label class="block text-xs font-bold">Alerta Stock Mínimo</label><input v-model.number="productModal.data.stock_minimo" type="number" step="0.1" class="w-full p-2 border rounded"></div>
+                        <div><label class="mx-label">Stock Actual</label><input v-model.number="productModal.data.stock" type="number" step="0.1" class="mx-input"></div>
+                        <div><label class="mx-label">Alerta Stock Mínimo</label><input v-model.number="productModal.data.stock_minimo" type="number" step="0.1" class="mx-input"></div>
                     </div>
 
                     <label class="flex items-center gap-2 text-sm bg-amber-50 p-3 rounded border border-amber-200">
@@ -1303,85 +1482,85 @@
                     </label>
 
                     <div class="flex space-x-3 mt-4 pt-4 border-t">
-                        <button type="button" @click="productModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                        <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Guardar</button>
+                        <button type="button" @click="productModal.show = false" class="mx-btn mx-btn-ghost flex-1">Cancelar</button>
+                        <button type="submit" class="mx-btn mx-btn-primary flex-1">Guardar</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- MODAL: USUARIO (FASE 5) -->
-        <div v-if="usuarioModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <div v-if="usuarioModal.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="mx-modal p-6 w-full max-w-md">
                 <h3 class="text-xl font-bold mb-4">{{ usuarioModal.isEdit ? 'Editar usuario' : 'Nuevo usuario' }}</h3>
                 <form @submit.prevent="guardarUsuario" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-bold">Nombre y apellido</label>
-                        <input v-model="usuarioModal.data.nombre" required type="text" class="w-full p-2 border rounded">
+                        <label class="mx-label">Nombre y apellido</label>
+                        <input v-model="usuarioModal.data.nombre" required type="text" class="mx-input">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold">Usuario para entrar</label>
-                        <input v-model="usuarioModal.data.usuario" required type="text" class="w-full p-2 border rounded">
-                        <p class="text-xs text-gray-400">Letras, números, punto, guion y guion bajo.</p>
+                        <label class="mx-label">Usuario para entrar</label>
+                        <input v-model="usuarioModal.data.usuario" required type="text" class="mx-input">
+                        <p class="text-xs text-slate-400">Letras, números, punto, guion y guion bajo.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold">Rol</label>
-                        <select v-model="usuarioModal.data.rol" class="w-full p-2 border rounded">
+                        <label class="mx-label">Rol</label>
+                        <select v-model="usuarioModal.data.rol" class="mx-input">
                             <option value="cajero">Cajero (vende y cobra)</option>
                             <option value="admin">Administrador (ve todo)</option>
                         </select>
                     </div>
-                    <label class="flex items-center gap-2 text-sm bg-gray-50 p-3 rounded border">
+                    <label class="flex items-center gap-2 text-sm bg-slate-50 p-3 rounded border">
                         <input type="checkbox" v-model="usuarioModal.data.activo" :true-value="1" :false-value="0" class="w-5 h-5">
                         <span>Puede entrar al sistema</span>
                     </label>
                     <div class="border-t pt-3 space-y-2">
-                        <label class="block text-xs font-bold">
+                        <label class="mx-label">
                             {{ usuarioModal.isEdit ? 'Nueva contraseña (déjela vacía para no cambiarla)' : 'Contraseña' }}
                         </label>
-                        <input v-model="usuarioModal.data.clave" :required="!usuarioModal.isEdit" type="password" class="w-full p-2 border rounded">
-                        <input v-model="usuarioModal.data.clave2" :required="!usuarioModal.isEdit" type="password" placeholder="Repetir la contraseña" class="w-full p-2 border rounded">
-                        <p class="text-xs text-gray-400">Mínimo 8 caracteres.</p>
+                        <input v-model="usuarioModal.data.clave" :required="!usuarioModal.isEdit" type="password" class="mx-input">
+                        <input v-model="usuarioModal.data.clave2" :required="!usuarioModal.isEdit" type="password" placeholder="Repetir la contraseña" class="mx-input">
+                        <p class="text-xs text-slate-400">Mínimo 8 caracteres.</p>
                     </div>
                     <div class="flex space-x-3 mt-4 pt-4 border-t">
-                        <button type="button" @click="usuarioModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                        <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Guardar</button>
+                        <button type="button" @click="usuarioModal.show = false" class="mx-btn mx-btn-ghost flex-1">Cancelar</button>
+                        <button type="submit" class="mx-btn mx-btn-primary flex-1">Guardar</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- MODAL: CAMBIAR MI CONTRASEÑA (FASE 5) -->
-        <div v-if="claveForm.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <div v-if="claveForm.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="mx-modal p-6 w-full max-w-md">
                 <h3 class="text-xl font-bold mb-4">Cambiar mi contraseña</h3>
                 <form @submit.prevent="cambiarMiClave" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-bold">Contraseña actual</label>
-                        <input v-model="claveForm.actual" required type="password" class="w-full p-2 border rounded">
+                        <label class="mx-label">Contraseña actual</label>
+                        <input v-model="claveForm.actual" required type="password" class="mx-input">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold">Nueva contraseña</label>
-                        <input v-model="claveForm.nueva" required type="password" class="w-full p-2 border rounded">
-                        <p class="text-xs text-gray-400">Mínimo 8 caracteres.</p>
+                        <label class="mx-label">Nueva contraseña</label>
+                        <input v-model="claveForm.nueva" required type="password" class="mx-input">
+                        <p class="text-xs text-slate-400">Mínimo 8 caracteres.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold">Repetir la nueva</label>
-                        <input v-model="claveForm.nueva2" required type="password" class="w-full p-2 border rounded">
+                        <label class="mx-label">Repetir la nueva</label>
+                        <input v-model="claveForm.nueva2" required type="password" class="mx-input">
                     </div>
                     <div class="flex space-x-3 mt-4 pt-4 border-t">
-                        <button type="button" @click="claveForm.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                        <button type="submit" class="flex-1 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700">Cambiar</button>
+                        <button type="button" @click="claveForm.show = false" class="mx-btn mx-btn-ghost flex-1">Cancelar</button>
+                        <button type="submit" class="mx-btn mx-btn-primary flex-1">Cambiar</button>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- MODAL: ANULAR VENTA (FASE 4) -->
-        <div v-if="anularModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+        <div v-if="anularModal.show" class="mx-overlay fixed inset-0 flex items-center justify-center z-50 p-4">
+            <div class="mx-modal p-6 w-full max-w-md">
                 <h3 class="text-xl font-bold mb-1 text-red-700"><i class="fa-solid fa-ban mr-1"></i> Anular venta #{{ anularModal.venta.id }}</h3>
-                <p class="text-sm text-gray-600 mb-3">
+                <p class="text-sm text-slate-600 mb-3">
                     {{ formatMoney(anularModal.venta.total) }} · {{ anularModal.venta.cliente_nombre || 'Sin cliente' }}
                 </p>
 
@@ -1394,12 +1573,12 @@
                     </ul>
                 </div>
 
-                <label class="block text-sm font-bold mb-1">¿Por qué se anula?</label>
-                <input v-model="anularModal.motivo" type="text" maxlength="255" placeholder="Ej: se cobró dos veces" class="w-full p-3 border rounded-lg mb-4">
+                <label class="mx-label">¿Por qué se anula?</label>
+                <input v-model="anularModal.motivo" type="text" maxlength="255" placeholder="Ej: se cobró dos veces" class="mx-input mb-4">
 
                 <div class="flex gap-3">
-                    <button @click="anularModal.show = false" class="flex-1 py-2 bg-gray-200 rounded font-semibold hover:bg-gray-300">Cancelar</button>
-                    <button @click="confirmarAnulacion" :disabled="anulando || anularModal.motivo.trim().length < 5" class="flex-1 py-2 bg-red-600 text-white rounded font-semibold hover:bg-red-700 disabled:opacity-50">
+                    <button @click="anularModal.show = false" class="mx-btn mx-btn-ghost flex-1">Cancelar</button>
+                    <button @click="confirmarAnulacion" :disabled="anulando || anularModal.motivo.trim().length < 5" class="mx-btn mx-btn-danger flex-1">
                         <i class="fa-solid fa-spinner fa-spin mr-1" v-if="anulando"></i>
                         Anular
                     </button>

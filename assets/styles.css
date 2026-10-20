@@ -1,20 +1,705 @@
-/* Custom overrides and utilities not easily achievable with Tailwind classes */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-track {
-    background: #f1f1f1; 
-}
-::-webkit-scrollbar-thumb {
-    background: #c1c1c1; 
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8; 
+/* ============================================================
+   MINERVOX · Sistema visual
+   Azul profundo + papel claro. Cifras tabulares tipo instrumento.
+   No depende de internet: usa tipografías que ya vienen en Windows.
+   ============================================================ */
+
+:root {
+    --mx-ink-900: #07182b;
+    --mx-ink-800: #0b2240;
+    --mx-ink-700: #0f2d4d;
+    --mx-blue-600: #1d53c9;
+    --mx-blue-500: #2f6be4;
+    --mx-blue-100: #dbe8ff;
+    --mx-blue-50: #eff5ff;
+    --mx-line: #dce5f2;
+    --mx-line-soft: #eaf0f8;
+    --mx-paper: #f1f5fb;
+    --mx-text: #16243a;
+    --mx-muted: #5c6b81;
+    --mx-green: #0f7a55;
+    --mx-amber: #b45309;
+    --mx-red: #b32d15;
+    --mx-display: 'Bahnschrift', 'DIN Alternate', 'Franklin Gothic Medium', 'Segoe UI', sans-serif;
+    --mx-mono: 'Cascadia Mono', 'Consolas', 'SFMono-Regular', 'Menlo', monospace;
+    --mx-shadow-sm: 0 1px 2px rgba(7, 24, 43, .05), 0 1px 3px rgba(7, 24, 43, .06);
+    --mx-shadow: 0 1px 2px rgba(7, 24, 43, .04), 0 12px 28px -18px rgba(7, 24, 43, .38);
+    --mx-shadow-lg: 0 2px 4px rgba(7, 24, 43, .05), 0 28px 60px -24px rgba(7, 24, 43, .48);
 }
 
-/* Print utilities (when not using html2pdf) */
+html,
+body {
+    height: 100%;
+}
+
+body {
+    font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--mx-text);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #c3d2e6;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #9db5d4;
+    background-clip: content-box;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--mx-blue-600);
+}
+
+::selection {
+    background: #cfe1ff;
+    color: #07182b;
+}
+
+/* ---------- Tipografía ---------- */
+.font-display,
+.mx-display {
+    font-family: var(--mx-display);
+    letter-spacing: .01em;
+}
+.font-num,
+.mx-num {
+    font-family: var(--mx-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+}
+
+.mx-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #6b89bb;
+    line-height: 1;
+}
+.mx-eyebrow::before {
+    content: "";
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: #94b3e8;
+}
+.mx-h1 {
+    font-family: var(--mx-display);
+    font-size: clamp(1.55rem, 2.6vw, 2.1rem);
+    line-height: 1.05;
+    font-weight: 700;
+    color: var(--mx-ink-800);
+    letter-spacing: -.01em;
+}
+.mx-h2 {
+    font-family: var(--mx-display);
+    font-size: 1.12rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--mx-ink-800);
+}
+.mx-sub {
+    font-size: .84rem;
+    color: var(--mx-muted);
+    line-height: 1.45;
+}
+
+/* ---------- Lienzo de trabajo ---------- */
+.mx-canvas {
+    background-color: var(--mx-paper);
+    background-image:
+        radial-gradient(900px 420px at 85% -10%, rgba(47, 107, 228, .10), transparent 70%),
+        radial-gradient(rgba(15, 45, 77, .055) 1px, transparent 1px);
+    background-size: auto, 24px 24px;
+}
+
+.mx-blueprint {
+    position: relative;
+    isolation: isolate;
+}
+.mx-blueprint::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(147, 197, 253, .10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(147, 197, 253, .10) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(120% 100% at 18% 0%, #000 20%, transparent 78%);
+    mask-image: radial-gradient(120% 100% at 18% 0%, #000 20%, transparent 78%);
+}
+
+/* ---------- Barra lateral ---------- */
+.mx-rail {
+    background: linear-gradient(180deg, #0b2340 0%, #081a2f 54%, #061527 100%);
+    position: relative;
+    isolation: isolate;
+}
+.mx-rail::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(125, 211, 252, .06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 211, 252, .045) 1px, transparent 1px);
+    background-size: 100% 32px, 32px 100%;
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .9), transparent 88%);
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .9), transparent 88%);
+}
+
+.mx-logo {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, #3b82f6, #17439f);
+    box-shadow: 0 6px 16px -6px rgba(47, 107, 228, .85), inset 0 1px 0 rgba(255, 255, 255, .35);
+    color: #fff;
+    font-family: var(--mx-display);
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -.02em;
+}
+
+.mx-nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    width: 100%;
+    padding: .55rem .65rem;
+    border-radius: 10px;
+    color: #b9cbe6;
+    transition: background .15s ease, color .15s ease;
+    text-align: left;
+    cursor: pointer;
+}
+.mx-nav:hover {
+    background: rgba(125, 170, 255, .10);
+    color: #fff;
+}
+.mx-nav-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .06);
+    font-size: 15px;
+    transition: inherit;
+}
+.mx-nav:hover .mx-nav-icon {
+    background: rgba(255, 255, 255, .10);
+}
+.mx-nav.is-active {
+    background: linear-gradient(90deg, rgba(47, 107, 228, .30), rgba(47, 107, 228, .10));
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(125, 170, 255, .18);
+}
+.mx-nav.is-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #7dd3fc, #3b82f6);
+    box-shadow: 0 0 12px rgba(125, 211, 252, .7);
+}
+.mx-nav.is-active .mx-nav-icon {
+    background: linear-gradient(145deg, #2f6be4, #17439f);
+    border-color: rgba(255, 255, 255, .16);
+    box-shadow: 0 4px 12px -4px rgba(47, 107, 228, .9);
+    color: #fff;
+}
+.mx-nav-sub {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-weight: 700;
+    color: rgba(147, 197, 253, .55);
+    line-height: 1.1;
+}
+.mx-nav.is-active .mx-nav-sub {
+    color: rgba(191, 219, 254, .85);
+}
+.mx-rail-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    flex: 1;
+    padding: .42rem .4rem;
+    border-radius: 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: #a8bfdd;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .07);
+    transition: .15s;
+    cursor: pointer;
+}
+.mx-rail-btn:hover {
+    background: rgba(255, 255, 255, .10);
+    color: #fff;
+}
+
+/* ---------- Tarjetas ---------- */
+.mx-card {
+    background: #fff;
+    border: 1px solid var(--mx-line);
+    border-radius: 14px;
+    box-shadow: var(--mx-shadow-sm);
+}
+.mx-card-hover {
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.mx-card-hover:hover {
+    transform: translateY(-3px);
+    border-color: #b9cef0;
+    box-shadow: var(--mx-shadow);
+}
+
+.mx-bar {
+    background: #f7faff;
+    border-bottom: 1px solid var(--mx-line);
+}
+
+/* ---------- Tarjetas de indicador ---------- */
+.mx-stat {
+    position: relative;
+    overflow: hidden;
+    padding: 1.1rem 1.25rem;
+    background: #fff;
+    border: 1px solid var(--mx-line);
+    border-radius: 14px;
+    box-shadow: var(--mx-shadow-sm);
+}
+.mx-stat::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    background: var(--mx-accent, var(--mx-blue-600));
+}
+.mx-stat::after {
+    content: "";
+    position: absolute;
+    right: -34px;
+    top: -34px;
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: var(--mx-accent, var(--mx-blue-600));
+    opacity: .05;
+    pointer-events: none;
+}
+.mx-stat-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    font-weight: 800;
+    color: var(--mx-muted);
+    line-height: 1.2;
+}
+.mx-stat-value {
+    font-family: var(--mx-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(1.3rem, 2.3vw, 1.8rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--mx-ink-800);
+    letter-spacing: -.035em;
+    margin-top: .28rem;
+    white-space: nowrap;
+}
+.mx-stat-note {
+    font-size: .71rem;
+    color: #7b8aa0;
+    margin-top: .2rem;
+    line-height: 1.3;
+}
+.mx-stat-click {
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.mx-stat-click:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mx-shadow);
+    border-color: #bfd2ee;
+}
+.mx-stat-blue { --mx-accent: #1d53c9; }
+.mx-stat-red { --mx-accent: #b32d15; }
+.mx-stat-amber { --mx-accent: #d97706; }
+.mx-stat-green { --mx-accent: #0f7a55; }
+.mx-stat-purple { --mx-accent: #6d3fc0; }
+.mx-stat-red .mx-stat-value { color: #9f2a16; }
+.mx-stat-amber .mx-stat-value { color: #8a4a06; }
+.mx-stat-green .mx-stat-value { color: #0b6043; }
+.mx-stat-blue .mx-stat-value { color: #123c86; }
+
+/* ---------- Botones ---------- */
+.mx-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    padding: .6rem 1rem;
+    font-size: .875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    transition: background .15s, box-shadow .15s, transform .1s, border-color .15s, color .15s;
+    cursor: pointer;
+}
+.mx-btn:active {
+    transform: translateY(1px);
+}
+.mx-btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+.mx-btn-primary {
+    color: #fff;
+    background: linear-gradient(180deg, #2a64e0, #1d4fc4);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 8px 18px -12px rgba(29, 79, 196, .9);
+}
+.mx-btn-primary:hover {
+    background: linear-gradient(180deg, #2f6df0, #1a47b5);
+}
+.mx-btn-ghost {
+    background: #fff;
+    color: #26374f;
+    border-color: #cfdaeb;
+    box-shadow: var(--mx-shadow-sm);
+}
+.mx-btn-ghost:hover {
+    background: #f5f8fd;
+    border-color: #b8cbe8;
+}
+.mx-btn-dark {
+    background: linear-gradient(180deg, #12283f, #0a1c2e);
+    color: #fff;
+    box-shadow: 0 8px 18px -12px rgba(7, 24, 43, .9);
+}
+.mx-btn-dark:hover {
+    background: #0d2137;
+}
+.mx-btn-success {
+    background: linear-gradient(180deg, #128a60, #0d6b4a);
+    color: #fff;
+    box-shadow: 0 8px 18px -12px rgba(13, 107, 74, .9);
+}
+.mx-btn-success:hover {
+    background: #0d7a55;
+}
+.mx-btn-danger {
+    background: linear-gradient(180deg, #d33c22, #b02a13);
+    color: #fff;
+    box-shadow: 0 8px 18px -12px rgba(176, 42, 19, .9);
+}
+.mx-btn-danger:hover {
+    background: #b32d15;
+}
+.mx-btn-soft {
+    background: #eef4ff;
+    color: #17439f;
+    border-color: #d6e4ff;
+}
+.mx-btn-soft:hover {
+    background: #e3edff;
+}
+
+.mx-iconbtn {
+    display: inline-grid;
+    place-items: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    font-size: .82rem;
+    transition: transform .15s, background .15s, border-color .15s;
+    cursor: pointer;
+}
+.mx-iconbtn:hover {
+    transform: translateY(-1px);
+}
+.mx-iconbtn-green { background: #e7f7f0; color: #0b6043; border-color: #c9ecdd; }
+.mx-iconbtn-green:hover { background: #d5f0e5; }
+.mx-iconbtn-blue { background: #eaf1ff; color: #17439f; border-color: #d6e4ff; }
+.mx-iconbtn-blue:hover { background: #dde9ff; }
+.mx-iconbtn-grey { background: #f0f3f8; color: #4a5a70; border-color: #e0e7f1; }
+.mx-iconbtn-grey:hover { background: #e7ecf4; }
+.mx-iconbtn-wa { background: #e6f8ee; color: #0b7a44; border-color: #c5eed8; }
+.mx-iconbtn-wa:hover { background: #d3f3e2; }
+.mx-iconbtn-red { background: #fdeae6; color: #a02a15; border-color: #f6d2c9; }
+.mx-iconbtn-red:hover { background: #fbddd5; }
+
+/* ---------- Pestañas ---------- */
+.mx-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .6rem 1.05rem;
+    border-radius: 10px;
+    border: 1px solid var(--mx-line);
+    background: #fff;
+    color: #44546b;
+    font-weight: 700;
+    font-size: .86rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: var(--mx-shadow-sm);
+    transition: .15s;
+    cursor: pointer;
+}
+.mx-tab:hover {
+    border-color: #bcd0ee;
+    color: #17439f;
+}
+.mx-tab.is-active {
+    background: linear-gradient(180deg, #2a64e0, #1d4fc4);
+    border-color: #1d4fc4;
+    color: #fff;
+    box-shadow: 0 8px 18px -12px rgba(29, 79, 196, .9);
+}
+.mx-tab-red.is-active {
+    background: linear-gradient(180deg, #d33c22, #b02a13);
+    border-color: #b02a13;
+    box-shadow: 0 8px 18px -12px rgba(176, 42, 19, .9);
+}
+.mx-tab-amber.is-active {
+    background: linear-gradient(180deg, #e08a12, #c57406);
+    border-color: #c57406;
+    box-shadow: 0 8px 18px -12px rgba(197, 116, 6, .9);
+}
+.mx-tab-green.is-active {
+    background: linear-gradient(180deg, #128a60, #0d6b4a);
+    border-color: #0d6b4a;
+    box-shadow: 0 8px 18px -12px rgba(13, 107, 74, .9);
+}
+
+/* ---------- Formularios ---------- */
+.mx-input {
+    width: 100%;
+    border: 1px solid #cfdbec;
+    background: #fff;
+    border-radius: 10px;
+    padding: .56rem .72rem;
+    color: var(--mx-text);
+    font-size: .9rem;
+    line-height: 1.35;
+    transition: border-color .15s, box-shadow .15s;
+}
+.mx-input::placeholder {
+    color: #9aa8bb;
+}
+.mx-input:focus {
+    outline: none;
+    border-color: #3b74e8;
+    box-shadow: 0 0 0 3px rgba(59, 116, 232, .16);
+}
+.mx-input:disabled,
+.mx-input[readonly] {
+    background: #f3f6fb;
+    color: #6b7a8f;
+}
+.mx-input.mx-qty {
+    width: 4rem;
+    padding: .3rem .35rem;
+    text-align: center;
+    font-size: .82rem;
+}
+.mx-input.mx-price {
+    width: 6rem;
+    padding: .3rem .45rem;
+    text-align: right;
+    font-size: .82rem;
+}
+.mx-input.mx-w-40 {
+    width: 10rem;
+}
+.mx-input.mx-big {
+    padding: .85rem 1rem;
+    font-size: 1.15rem;
+    font-family: var(--mx-mono);
+    font-weight: 700;
+    text-align: right;
+    letter-spacing: -.02em;
+}
+.mx-label {
+    display: block;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #5f6f86;
+    margin-bottom: .3rem;
+    line-height: 1.3;
+}
+
+/* ---------- Tablas ---------- */
+.mx-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+}
+.mx-table thead th {
+    background: #f4f7fd;
+    color: #62728a;
+    font-size: .65rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    font-weight: 800;
+    padding: .7rem .75rem;
+    border-bottom: 1px solid var(--mx-line);
+    white-space: nowrap;
+}
+.mx-table tbody td {
+    padding: .7rem .75rem;
+    border-bottom: 1px solid var(--mx-line-soft);
+    vertical-align: middle;
+}
+.mx-table tbody tr {
+    transition: background .12s;
+}
+.mx-table tbody tr:hover {
+    background: #f7faff;
+}
+.mx-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+.mx-table tfoot td {
+    padding: .7rem .75rem;
+}
+
+/* ---------- Etiquetas ---------- */
+.mx-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .18rem .5rem;
+    border-radius: 999px;
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+.mx-badge-blue { background: #e8f0ff; color: #17439f; }
+.mx-badge-green { background: #e5f6ef; color: #0b6043; }
+.mx-badge-red { background: #fdeae6; color: #9f2a16; }
+.mx-badge-amber { background: #fdf1dc; color: #8a4a06; }
+.mx-badge-grey { background: #eef1f6; color: #55637a; }
+.mx-badge-purple { background: #f0e9fb; color: #5b2fa8; }
+
+/* Franja de peligro: sustancias controladas */
+.mx-hazard-edge {
+    position: relative;
+}
+.mx-hazard-edge::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: repeating-linear-gradient(-45deg, #d97706 0 4px, #fde3b3 4px 8px);
+}
+
+/* ---------- Avisos ---------- */
+.mx-toast {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .7rem 1rem;
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 600;
+    font-size: .875rem;
+    box-shadow: var(--mx-shadow-lg);
+    animation: mxslide .25s ease both;
+}
+.mx-toast-ok { background: linear-gradient(180deg, #0f8a62, #0b6c4b); }
+.mx-toast-err { background: linear-gradient(180deg, #cf3a20, #a92a13); }
+@keyframes mxslide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ---------- Entrada ---------- */
+.mx-auth-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, .45);
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .65);
+}
+
+/* ---------- Modales ---------- */
+.mx-overlay {
+    background: rgba(6, 21, 39, .62);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+.mx-modal {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e2eaf5;
+    box-shadow: var(--mx-shadow-lg);
+    animation: mxpop .18s ease both;
+}
+@keyframes mxpop {
+    from { opacity: 0; transform: scale(.985) translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ---------- Entrada suave de vistas ---------- */
+.mx-enter {
+    animation: mxfade .3s ease both;
+}
+@keyframes mxfade {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ---------- Impresión ---------- */
 @media print {
     body {
         margin: 0;
