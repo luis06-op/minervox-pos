@@ -1,4 +1,8 @@
 /* Custom overrides and utilities not easily achievable with Tailwind classes */
+[v-cloak] {
+    display: none;
+}
+
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

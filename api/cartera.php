@@ -1,116 +1,146 @@
 <?php
-header('Content-Type: application/json');
-require_once 'db.php';
+declare(strict_types=1);
 
-$method = $_SERVER['REQUEST_METHOD'];
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/utilidades.php';
 
-if ($method === 'GET') {
-    $action = $_GET['action'] ?? 'list';
-    
-    if ($action === 'dashboard') {
-        // Dashboard Stats
-        $stats = [];
-        
-        // Capital en inventario (costo * stock)
-        $stmt = $pdo->query('SELECT SUM(precio_costo * stock) as capital_inventario FROM productos');
-        $stats['capital_inventario'] = $stmt->fetch()['capital_inventario'] ?? 0;
-        
-        // Dinero en caja (Ventas de contado hoy + abonos de hoy)
-        $stmtCaja = $pdo->query('SELECT SUM(total) as ventas_contado FROM ventas WHERE tipo_venta = "contado" AND DATE(fecha) = CURDATE()');
-        $ventas_contado = $stmtCaja->fetch()['ventas_contado'] ?? 0;
-        
-        $stmtAbonos = $pdo->query('SELECT SUM(monto) as total_abonos FROM abonos WHERE DATE(fecha) = CURDATE()');
-        $total_abonos = $stmtAbonos->fetch()['total_abonos'] ?? 0;
-        
-        $stats['dinero_caja'] = $ventas_contado + $total_abonos;
-        
-        // Plata en la calle (Saldo total pendiente de créditos activos)
-        $stmtDeuda = $pdo->query('SELECT SUM(saldo_pendiente) as plata_calle FROM cartera_creditos WHERE estado = "activo"');
-        $stats['plata_calle'] = $stmtDeuda->fetch()['plata_calle'] ?? 0;
-        
-        echo json_encode($stats);
-        
-    } elseif ($action === 'list') {
-        // Listado de deudores
+manejar_api(function () use ($pdo): void {
+    $metodo = requerir_metodo('GET', 'POST');
+
+    if ($metodo === 'GET') {
+        $accion = $_GET['action'] ?? 'list';
+
+        if ($accion === 'dashboard') {
+            $capitalInventario = (float) $pdo->query(
+                'SELECT COALESCE(SUM(precio_costo * stock), 0) FROM productos WHERE activo = 1'
+            )->fetchColumn();
+
+            $ventasContadoHoy = (float) $pdo->query(
+                "SELECT COALESCE(SUM(total), 0) FROM ventas
+                  WHERE tipo_venta = 'contado'
+                    AND fecha >= CURDATE() AND fecha < CURDATE() + INTERVAL 1 DAY"
+            )->fetchColumn();
+
+            $abonosHoy = (float) $pdo->query(
+                'SELECT COALESCE(SUM(monto), 0) FROM abonos
+                  WHERE fecha >= CURDATE() AND fecha < CURDATE() + INTERVAL 1 DAY'
+            )->fetchColumn();
+
+            $plataCalle = (float) $pdo->query(
+                "SELECT COALESCE(SUM(saldo_pendiente), 0) FROM cartera_creditos WHERE estado = 'activo'"
+            )->fetchColumn();
+
+            $creditosActivos = (int) $pdo->query(
+                "SELECT COUNT(*) FROM cartera_creditos WHERE estado = 'activo'"
+            )->fetchColumn();
+
+            $creditosVencidos = (int) $pdo->query(
+                "SELECT COUNT(*) FROM cartera_creditos
+                  WHERE estado = 'activo' AND fecha_vencimiento < CURDATE()"
+            )->fetchColumn();
+
+            responder([
+                'capital_inventario'  => round($capitalInventario, 2),
+                'dinero_caja'         => round($ventasContadoHoy + $abonosHoy, 2),
+                'plata_calle'         => round($plataCalle, 2),
+                'ventas_contado_hoy'  => round($ventasContadoHoy, 2),
+                'abonos_hoy'          => round($abonosHoy, 2),
+                'creditos_activos'    => $creditosActivos,
+                'creditos_vencidos'   => $creditosVencidos,
+            ]);
+        }
+
+        if ($accion !== 'list') {
+            throw new ErrorApi('Acción no válida.', 400);
+        }
+
         $sql = "
-            SELECT 
-                cc.id as credito_id,
+            SELECT
+                cc.id                 AS credito_id,
                 cc.saldo_pendiente,
                 cc.fecha_vencimiento,
                 cc.estado,
-                v.fecha as fecha_venta,
-                v.total as total_venta,
-                c.nombre as cliente_nombre,
-                c.telefono as cliente_telefono
+                v.fecha               AS fecha_venta,
+                v.total               AS total_venta,
+                c.nombre              AS cliente_nombre,
+                c.cedula              AS cliente_cedula,
+                c.telefono            AS cliente_telefono,
+                DATEDIFF(cc.fecha_vencimiento, CURDATE()) AS dias_restantes,
+                CASE
+                    WHEN cc.estado = 'pagado' THEN 'gray'
+                    WHEN cc.fecha_vencimiento < CURDATE() THEN 'red'
+                    WHEN cc.fecha_vencimiento <= CURDATE() + INTERVAL 2 DAY THEN 'yellow'
+                    ELSE 'green'
+                END                   AS color
             FROM cartera_creditos cc
             JOIN ventas v ON cc.venta_id = v.id
             JOIN clientes c ON v.cliente_id = c.id
-            ORDER BY cc.fecha_vencimiento ASC
+            ORDER BY (cc.estado = 'activo') DESC, cc.fecha_vencimiento ASC, cc.id ASC
         ";
-        $stmt = $pdo->query($sql);
-        $creditos = $stmt->fetchAll();
-        
-        // Calcular estado (Verde, Amarillo, Rojo)
-        $hoy = new DateTime();
-        $hoy->setTime(0,0,0);
-        
-        foreach ($creditos as &$cred) {
-            if ($cred['estado'] === 'pagado') {
-                $cred['color'] = 'gray';
-                continue;
-            }
-            
-            $vence = new DateTime($cred['fecha_vencimiento']);
-            $vence->setTime(0,0,0);
-            $interval = $hoy->diff($vence);
-            $dias = (int)$interval->format('%R%a'); // Ej: +3, -1
-            
-            if ($dias < 0) {
-                $cred['color'] = 'red'; // Mora
-            } elseif ($dias <= 2) {
-                $cred['color'] = 'yellow'; // Alerta (0, 1, 2)
-            } else {
-                $cred['color'] = 'green'; // Al día
-            }
+
+        $creditos = $pdo->query($sql)->fetchAll();
+
+        foreach ($creditos as &$credito) {
+            $credito['credito_id'] = (int) $credito['credito_id'];
+            $credito['saldo_pendiente'] = (float) $credito['saldo_pendiente'];
+            $credito['total_venta'] = (float) $credito['total_venta'];
+            $credito['dias_restantes'] = (int) $credito['dias_restantes'];
         }
-        
-        echo json_encode($creditos);
+        unset($credito);
+
+        responder($creditos);
     }
-} elseif ($method === 'POST') {
-    // Registrar abono
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    $credito_id = $data['credito_id'];
-    $monto = $data['monto'];
-    
+
+    // POST: registrar abono
+    $datos = leer_json();
+    $creditoId = entero_requerido($datos, 'credito_id', 'Crédito');
+    $monto = round(numero_requerido($datos, 'monto', 'Monto del abono', 0.01, 9999999999.99), 2);
+
     $pdo->beginTransaction();
+
     try {
-        // Insertar abono
-        $stmt = $pdo->prepare('INSERT INTO abonos (credito_id, monto) VALUES (?, ?)');
-        $stmt->execute([$credito_id, $monto]);
-        
-        // Actualizar saldo
-        $stmtUpdate = $pdo->prepare('UPDATE cartera_creditos SET saldo_pendiente = saldo_pendiente - ? WHERE id = ?');
-        $stmtUpdate->execute([$monto, $credito_id]);
-        
-        // Verificar si se pagó todo
-        $stmtCheck = $pdo->prepare('SELECT saldo_pendiente FROM cartera_creditos WHERE id = ?');
-        $stmtCheck->execute([$credito_id]);
-        $saldo = $stmtCheck->fetch()['saldo_pendiente'];
-        
-        if ($saldo <= 0) {
-            $pdo->prepare('UPDATE cartera_creditos SET estado = "pagado", saldo_pendiente = 0 WHERE id = ?')->execute([$credito_id]);
+        $stmt = $pdo->prepare(
+            'SELECT saldo_pendiente, estado FROM cartera_creditos WHERE id = ? FOR UPDATE'
+        );
+        $stmt->execute([$creditoId]);
+        $credito = $stmt->fetch();
+
+        if (!$credito) {
+            throw new ErrorApi('El crédito no existe.', 404);
         }
-        
+
+        if ($credito['estado'] !== 'activo') {
+            throw new ErrorApi('Este crédito ya está pagado.', 409);
+        }
+
+        $saldoActual = (float) $credito['saldo_pendiente'];
+
+        if ($monto > $saldoActual + 0.004) {
+            throw new ErrorApi('El abono no puede superar el saldo pendiente (' . numero_a_texto($saldoActual) . ').');
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO abonos (credito_id, monto) VALUES (?, ?)');
+        $stmt->execute([$creditoId, $monto]);
+
+        $nuevoSaldo = max(0.0, round($saldoActual - $monto, 2));
+
+        $stmt = $pdo->prepare(
+            'UPDATE cartera_creditos SET saldo_pendiente = ?, estado = ? WHERE id = ?'
+        );
+        $stmt->execute([$nuevoSaldo, $nuevoSaldo <= 0 ? 'pagado' : 'activo', $creditoId]);
+
         $pdo->commit();
-        echo json_encode(['success' => true]);
-    } catch (\Exception $e) {
-        $pdo->rollBack();
-        header('HTTP/1.1 500 Internal Server Error');
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+
+        responder([
+            'success'         => true,
+            'saldo_pendiente' => $nuevoSaldo,
+            'estado'          => $nuevoSaldo <= 0 ? 'pagado' : 'activo',
+        ]);
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        throw $e;
     }
-} else {
-    header('HTTP/1.1 405 Method Not Allowed');
-    echo json_encode(['error' => 'Method not allowed']);
-}
-?>
+});

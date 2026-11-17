@@ -1,0 +1,21 @@
+# Configuración local (nunca subir credenciales)
+api/config.local.php
+config.local.php
+.env
+.env.*
+
+# Logs y temporales
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Respaldos y volcados de base de datos
+*.bak
+*.sql.gz
+respaldo_*.sql
+backup_*.sql
+
+# Editores
+.vscode/
+.idea/

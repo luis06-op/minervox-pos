@@ -1,0 +1,27 @@
+# Configuración de Apache para XAMPP.
+# Este archivo solo tiene efecto bajo Apache; el servidor embebido de PHP lo ignora.
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# No exponer el esquema, respaldos, documentación ni configuración local.
+<FilesMatch "\.(sql|log|env|bak|ini|md)$">
+    Require all denied
+</FilesMatch>
+
+<Files "config.local.php">
+    Require all denied
+</Files>
+
+# Bloquear el directorio .git y los archivos de base de datos/migraciones.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule (^|/)\.git - [F,L]
+    RewriteRule ^database(/|$) - [F,L]
+</IfModule>
